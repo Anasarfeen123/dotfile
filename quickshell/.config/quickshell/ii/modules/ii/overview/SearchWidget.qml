@@ -115,8 +115,6 @@ Item { // Wrapper
         // surface-container token this used before — keeps the whole
         // overview reading as one consistent frosted-glass surface.
         color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.72)
-        border.width: 1
-        border.color: Appearance.colors.colLayer0Border
 
         Behavior on implicitHeight {
             id: searchHeightBehavior
@@ -125,7 +123,7 @@ Item { // Wrapper
         }
 
         border.width: 1
-        border.color: ColorUtils.applyAlpha(Appearance.colors.colOutlineVariant, 0.45)
+        border.color: Appearance.colors.colLayer0Border
 
         ColumnLayout {
             id: columnLayout
