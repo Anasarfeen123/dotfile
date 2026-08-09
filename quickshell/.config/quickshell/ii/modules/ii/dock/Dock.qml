@@ -28,12 +28,19 @@ Scope { // Scope
             screen: modelData
             visible: !GlobalStates.screenLocked
 
-            // Debounced: show instantly, but hide only after a short grace
-            // period. Without this, a momentary null-focus blip between
-            // closing one window and the next one activating (part of
-            // `reveal`'s condition below) made the dock flicker
-            // show/hide/show within the same transition.
-            readonly property bool wantsReveal: root.pinned || (Config.options?.dock.hoverToReveal && dockMouseArea.containsMouse) || dockApps.requestDockShow || (!ToplevelManager.activeToplevel?.activated)
+            // Dropped the old "reveal whenever no window is focused" clause
+            // entirely — it fired during completely normal things (closing
+            // a window, switching workspaces, anything with a momentary gap
+            // between one window losing focus and the next gaining it), so
+            // the dock would pop up unpredictably outside of an actual
+            // hover or pin. Reveal is now just: pinned, hovering, or a
+            // preview popup wants it visible — nothing implicit.
+            //
+            // Still debounced: show instantly, hide only after a short
+            // grace period, so a momentary mouse blip off the hover region
+            // (e.g. crossing into a dock icon's own bounds) doesn't cause a
+            // visible show/hide/show flicker.
+            readonly property bool wantsReveal: root.pinned || (Config.options?.dock.hoverToReveal && dockMouseArea.containsMouse) || dockApps.requestDockShow
             property bool reveal: wantsReveal
 
             onWantsRevealChanged: {
