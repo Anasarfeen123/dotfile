@@ -80,7 +80,12 @@ Item {
         implicitWidth: workspaceColumnLayout.implicitWidth + padding * 2
         implicitHeight: workspaceColumnLayout.implicitHeight + padding * 2
         radius: root.largeWorkspaceRadius + padding
-        color: Appearance.colors.colBackgroundSurfaceContainer
+        // Same glass recipe as the sidebars/dock/search bar above it —
+        // was riding the global transparency token and reading flatter
+        // than the rest of the overview.
+        color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.72)
+        border.width: 1
+        border.color: Appearance.colors.colLayer0Border
 
         Column { // Workspaces
             id: workspaceColumnLayout

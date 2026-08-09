@@ -111,7 +111,12 @@ Item { // Wrapper
         implicitWidth: columnLayout.implicitWidth
         implicitHeight: columnLayout.implicitHeight
         radius: searchBar.height / 2 + searchBar.verticalPadding
-        color: ColorUtils.applyAlpha(Appearance.colors.colBackgroundSurfaceContainer, 0.92)
+        // Same glass recipe as the sidebars/dock, rather than the M3
+        // surface-container token this used before — keeps the whole
+        // overview reading as one consistent frosted-glass surface.
+        color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.72)
+        border.width: 1
+        border.color: Appearance.colors.colLayer0Border
 
         Behavior on implicitHeight {
             id: searchHeightBehavior
@@ -135,7 +140,11 @@ Item { // Wrapper
             layer.effect: OpacityMask {
                 maskSource: Rectangle {
                     width: searchWidgetContent.width
-                    height: searchWidgetContent.width
+                    // Was searchWidgetContent.width here too — a square
+                    // mask capped at the (usually narrower) width, which
+                    // clips the bottom of the results list off once the
+                    // widget expands taller than it is wide.
+                    height: searchWidgetContent.height
                     radius: searchWidgetContent.radius
                 }
             }

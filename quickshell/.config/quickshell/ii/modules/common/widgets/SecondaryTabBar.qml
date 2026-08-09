@@ -10,15 +10,18 @@ TabBar {
     property real indicatorPadding: 8
     Layout.fillWidth: true
 
-    // Geometry of the current tab button (handles variable-width tabs)
+    // Geometry of the current tab button (handles variable-width tabs).
+    // `itemAt()` is Container's own documented lookup — reaching into
+    // contentItem.children[index] instead (the old approach) assumes
+    // delegate order in the content view's children list matches model
+    // index, which isn't guaranteed and was why the indicator only ever
+    // lined up for index 0 and covered the wrong span everywhere else.
     readonly property real currentTabX: {
-        const c = root.contentItem
-        const btn = c && c.children && c.children.length > 0 ? c.children[root.currentIndex] : null
+        const btn = root.itemAt(root.currentIndex)
         return btn ? btn.x : 0
     }
     readonly property real currentTabWidth: {
-        const c = root.contentItem
-        const btn = c && c.children && c.children.length > 0 ? c.children[root.currentIndex] : null
+        const btn = root.itemAt(root.currentIndex)
         return btn ? btn.width : 0
     }
 

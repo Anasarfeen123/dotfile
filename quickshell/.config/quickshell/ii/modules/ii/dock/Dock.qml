@@ -2,6 +2,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
@@ -87,7 +88,13 @@ Scope { // Scope
                             anchors.fill: parent
                             anchors.topMargin: Appearance.sizes.elevationMargin
                             anchors.bottomMargin: Appearance.sizes.hyprlandGapsOut
-                            color: Appearance.colors.colLayer0
+                            // Same fixed glass recipe as the sidebars
+                            // (colLayer0Base @ 0.72 + hairline border), not
+                            // the generic colLayer0 token — that one rides
+                            // the global transparency setting and reads
+                            // noticeably flatter/more opaque than the panels
+                            // it sits next to.
+                            color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.72)
                             border.width: 1
                             border.color: Appearance.colors.colLayer0Border
                             radius: Appearance.rounding.windowRounding
