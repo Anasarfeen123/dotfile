@@ -50,6 +50,10 @@ MouseArea { // Notification group area
         });
     }
 
+    StyledToolTip {
+        text: Translation.tr("Right-click: expand • Middle-click: dismiss • Drag: dismiss")
+    }
+
     SequentialAnimation { // Drag finish animation
         id: destroyAnimation
         property bool left: true
@@ -87,7 +91,7 @@ MouseArea { // Notification group area
 
         onPressed: {
             if (mouse.button === Qt.RightButton)
-                root.destroyWithAnimation();
+                root.toggleExpanded();
         }
 
         onClicked: (mouse) => {
