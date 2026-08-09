@@ -126,6 +126,26 @@ Scope { // Scope
                             border.width: 1
                             border.color: Appearance.colors.colLayer0Border
                             radius: Appearance.rounding.windowRounding
+                            clip: true
+
+                            // A faint top-edge highlight — the thin bright
+                            // line real glass/acrylic catches along its top
+                            // edge — for some actual material depth instead
+                            // of a flat translucent fill.
+                            Rectangle {
+                                anchors {
+                                    top: parent.top
+                                    left: parent.left
+                                    right: parent.right
+                                }
+                                height: 1
+                                gradient: Gradient {
+                                    orientation: Gradient.Horizontal
+                                    GradientStop { position: 0.0; color: ColorUtils.transparentize(Appearance.colors.colOnLayer0, 1) }
+                                    GradientStop { position: 0.5; color: ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.82) }
+                                    GradientStop { position: 1.0; color: ColorUtils.transparentize(Appearance.colors.colOnLayer0, 1) }
+                                }
+                            }
                         }
 
                         RowLayout {
@@ -139,19 +159,31 @@ Scope { // Scope
                             VerticalButtonGroup {
                                 Layout.topMargin: Appearance.sizes.hyprlandGapsOut // why does this work
                                 GroupButton {
-                                    // Pin button
+                                    // Pin button — a filled circle once
+                                    // toggled instead of a same-shaped
+                                    // rounded-square as everything else, so
+                                    // it reads as a distinct mode toggle
+                                    // rather than another app-like icon.
+                                    id: pinButton
                                     baseWidth: 35
                                     baseHeight: 35
                                     clickedWidth: baseWidth
                                     clickedHeight: baseHeight + 20
-                                    buttonRadius: Appearance.rounding.normal
+                                    buttonRadius: root.pinned ? Appearance.rounding.full : Appearance.rounding.normal
+                                    Behavior on buttonRadius {
+                                        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                                    }
                                     toggled: root.pinned
                                     onClicked: root.pinned = !root.pinned
                                     contentItem: MaterialSymbol {
                                         text: "keep"
+                                        fill: pinButton.toggled ? 1 : 0
                                         horizontalAlignment: Text.AlignHCenter
                                         iconSize: Appearance.font.pixelSize.larger
                                         color: root.pinned ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer0
+                                    }
+                                    StyledToolTip {
+                                        text: root.pinned ? Translation.tr("Unpin dock") : Translation.tr("Keep dock open")
                                     }
                                 }
                             }
@@ -162,16 +194,26 @@ Scope { // Scope
                             }
                             DockSeparator {}
                             DockButton {
+                                id: launcherButton
                                 Layout.fillHeight: true
                                 onClicked: GlobalStates.overviewOpen = !GlobalStates.overviewOpen
                                 topInset: Appearance.sizes.hyprlandGapsOut + dockRow.padding
                                 bottomInset: Appearance.sizes.hyprlandGapsOut + dockRow.padding
+                                buttonRadius: Appearance.rounding.full
+                                // Distinct filled pill instead of a plain
+                                // icon like the app buttons — this is the
+                                // one "show everything" action, not an app.
+                                colBackground: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
+                                colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.28)
                                 contentItem: MaterialSymbol {
                                     anchors.fill: parent
                                     horizontalAlignment: Text.AlignHCenter
                                     font.pixelSize: parent.width / 2
                                     text: "apps"
-                                    color: Appearance.colors.colOnLayer0
+                                    color: Appearance.colors.colPrimary
+                                }
+                                StyledToolTip {
+                                    text: Translation.tr("Show all apps")
                                 }
                             }
                         }

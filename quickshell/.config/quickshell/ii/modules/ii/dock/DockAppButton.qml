@@ -242,6 +242,22 @@ DockButton {
         sourceComponent: Item {
             anchors.centerIn: parent
 
+            // Material "state layer": a soft rounded tile fading in behind
+            // the icon on hover, so icons have some visual weight of their
+            // own beyond the scale-up — previously hover was *only* the
+            // magnify/lift, nothing sat under the icon itself.
+            Rectangle {
+                anchors.centerIn: parent
+                width: root.iconSize + 20
+                height: root.iconSize + 20
+                radius: Appearance.rounding.normal
+                color: Appearance.colors.colLayer1Hover
+                opacity: root.isHovered ? 1 : 0
+                Behavior on opacity {
+                    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                }
+            }
+
             Loader {
                 id: iconImageLoader
                 anchors {
