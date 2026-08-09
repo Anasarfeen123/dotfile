@@ -120,14 +120,14 @@
                 "showOnlyWhenLocked": false,
                 "style": "cookie",
                 "styleLocked": "cookie",
-                "x": 290.69140625,
-                "y": 539.1015624999999
+                "x": 230.7890625,
+                "y": 896.3124999999999
             },
             "weather": {
                 "enable": true,
                 "placementStrategy": "free",
-                "x": 1476.58203125,
-                "y": 81.23046875
+                "x": 1392.0078125,
+                "y": 363.8671875
             }
         }
     },
