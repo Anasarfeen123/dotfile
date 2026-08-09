@@ -93,11 +93,11 @@ Scope {
 
         // Dynamic-Island-style morph: a small pill sitting right at the
         // bar's bottom edge grows into the full search+overview panel.
-        // Both width and height animate (not just height), the corner
-        // radius is always min(width,height)/2 — maximally rounded on the
-        // short axis, exactly like a real Dynamic Island's shape language —
-        // so it reads as a pill at small sizes and eases into a rounded
-        // rect once wide enough. No opacity animation anywhere: the content
+        // Both width and height animate (not just height). Corner radius
+        // starts at min(width,height)/2 — maximally rounded, a true
+        // capsule — and blends to a fixed radius (matching the content's
+        // own rounding) as it widens past the collapsed size; see
+        // islandRadius below. No opacity animation anywhere: the content
         // is simply revealed as the clip grows, never faded.
         Item {
             id: revealClip
