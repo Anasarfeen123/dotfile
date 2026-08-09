@@ -257,11 +257,18 @@ Singleton {
             // Clipboard
             const searchString = StringUtils.cleanPrefix(root.query, Config.options.search.prefix.clipboard);
             return Cliphist.fuzzyQuery(searchString).map((entry, index, array) => {
-                const mightBlurImage = Cliphist.entryIsImage(entry) && root.clipboardWorkSafetyActive;
-                let shouldBlurImage = mightBlurImage;
-                if (mightBlurImage) {
-                    shouldBlurImage = shouldBlurImage && (root.containsUnsafeLink(array[index - 1]) || root.containsUnsafeLink(array[index + 1]));
-                }
+                // Used to also require an "unsafe" link in the *adjacent*
+                // clipboard entry (array[index-1/+1]) — entries that have
+                // nothing to do with this image, just happened to be next
+                // to it in the filtered/fuzzy-matched result list. That's
+                // why images were blurring seemingly at random: any
+                // flagged link anywhere near an image in your history
+                // would blur it, regardless of what the image actually
+                // was. Blur is now just "is this an image, and are we on
+                // a network flagged as sensitive" — predictable instead
+                // of effectively arbitrary. Toggle off entirely via
+                // workSafety.enable.clipboard in config.json if unwanted.
+                const shouldBlurImage = Cliphist.entryIsImage(entry) && root.clipboardWorkSafetyActive;
                 const type = `#${entry.match(/^\s*(\S+)/)?.[1] || ""}`;
                 return resultComp.createObject(null, {
                     rawValue: entry,
