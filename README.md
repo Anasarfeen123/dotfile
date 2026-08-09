@@ -40,13 +40,27 @@ Not included here (pulled in by the upstream installer instead):
 ## Install
 
 ```bash
-git clone https://github.com/<you>/dotfiles.git ~/Projects/dotfiles-local
+git clone https://github.com/Anasarfeen123/dotfile.git ~/Projects/dotfiles-local
 cd ~/Projects/dotfiles-local
 ./install.sh              # symlinks everything into place
 ./install.sh hypr fish    # or just specific packages
+./install.sh -n           # dry run: show what would happen, change nothing
+./install.sh -l           # list available packages
 ```
 
-Anything already at the destination is moved to `~/.dotfiles-backup/<timestamp>/` before the symlink is created, so it's safe to run on a machine that already has files there.
+Anything already at the destination is moved to `~/.dotfiles-backup/<timestamp>/` before the symlink is created, so it's safe to run on a machine that already has files there. Re-running is idempotent — already-correct symlinks are left alone.
+
+## Update
+
+Pulls the latest commit from this repo and re-links anything new:
+
+```bash
+./update.sh                # git pull (fast-forward only) + re-run install.sh
+./update.sh --no-install   # just pull, don't touch symlinks
+./update.sh -n             # pull, then dry-run install.sh
+```
+
+It refuses to do anything if the working tree has local changes (commit/stash first) or if history has diverged (needs a manual merge/rebase) — it only ever fast-forwards.
 
 ## A few things to adjust after cloning
 
