@@ -81,7 +81,7 @@
             "workspaceZoom": 1.09
         },
         "thumbnailPath": "",
-        "wallpaperPath": "/home/anasa/Downloads/jack-anstey-XVoyX7l9ocY-unsplash.jpg",
+        "wallpaperPath": "/home/anasa/Downloads/john-towner-JgOeRuGD_Y4-unsplash.jpg",
         "widgets": {
             "clock": {
                 "cookie": {
@@ -246,7 +246,7 @@
     "dock": {
         "enable": true,
         "height": 60,
-        "hoverRegionHeight": 2,
+        "hoverRegionHeight": 8,
         "hoverToReveal": true,
         "ignoredAppRegexes": [
         ],
@@ -256,7 +256,8 @@
             "kitty",
             "org.kde.dolphin",
             "com.github.th-ch.youtube-music",
-            "unity"
+            "unity",
+            "st"
         ],
         "pinnedOnStartup": false
     },

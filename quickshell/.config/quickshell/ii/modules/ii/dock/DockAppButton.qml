@@ -4,6 +4,7 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 import Qt5Compat.GraphicalEffects
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
@@ -58,12 +59,17 @@ DockButton {
         return 0.18 * t * t;
     }
 
+    // Was Easing.OutBack with a manual overshoot — the only place in the
+    // dock (and one of very few in the whole shell) not using the app's own
+    // BezierSpline motion tokens, which is likely why hovering felt off
+    // compared to everything else. elementMoveFast matches the snappy
+    // hover feedback used elsewhere (tab bars, resource icons, etc).
     scale: (isHovered ? 1.30 : 1.0) + neighborBoost
     Behavior on scale {
         NumberAnimation {
-            duration: 200
-            easing.type: Easing.OutBack
-            easing.overshoot: 1.6
+            duration: Appearance.animation.elementMoveFast.duration
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
         }
     }
 
@@ -71,8 +77,9 @@ DockButton {
         y: root.yOffset + root.bounceOffset
         Behavior on y {
             NumberAnimation {
-                duration: 180
-                easing.type: Easing.OutCubic
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
             }
         }
     }
@@ -146,8 +153,88 @@ DockButton {
         root.launch();
     }
 
+    // Was an instant, unlabeled pin/unpin toggle on right-click — you had
+    // to already know that gesture existed. A real menu instead, matching
+    // what right-clicking a dock icon does everywhere else.
     altAction: () => {
-        TaskbarApps.togglePin(appToplevel.appId);
+        if (!root.isSeparator) contextMenu.open();
+    }
+
+    Popup {
+        id: contextMenu
+        y: -implicitHeight - 8
+        x: (root.width - width) / 2
+        modal: false
+        focus: true
+        closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
+        padding: 6
+
+        readonly property var actions: [
+            {
+                icon: "open_in_new",
+                text: Translation.tr("Open"),
+                visible: true,
+                danger: false,
+                trigger: () => root.launch(),
+            },
+            {
+                icon: TaskbarApps.isPinned(appToplevel.appId) ? "keep_off" : "keep",
+                text: TaskbarApps.isPinned(appToplevel.appId) ? Translation.tr("Unpin from dock") : Translation.tr("Pin to dock"),
+                visible: true,
+                danger: false,
+                trigger: () => TaskbarApps.togglePin(appToplevel.appId),
+            },
+            {
+                icon: "close",
+                text: Translation.tr("Quit"),
+                visible: appToplevel.toplevels.length > 0,
+                danger: true,
+                trigger: () => appToplevel.toplevels.forEach(t => t.close()),
+            },
+        ]
+
+        background: Rectangle {
+            color: Appearance.m3colors.m3surfaceContainer
+            radius: Appearance.rounding.normal
+            border.width: 1
+            border.color: Appearance.colors.colLayer0Border
+        }
+
+        contentItem: ColumnLayout {
+            spacing: 2
+            implicitWidth: 190
+
+            Repeater {
+                model: contextMenu.actions
+                delegate: RippleButton {
+                    id: menuRow
+                    required property var modelData
+                    visible: modelData.visible
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: visible ? 36 : 0
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: "transparent"
+                    onClicked: {
+                        contextMenu.close();
+                        modelData.trigger();
+                    }
+                    leftPadding: 8
+                    rightPadding: 8
+                    contentItem: RowLayout {
+                        spacing: 8
+                        MaterialSymbol {
+                            text: menuRow.modelData.icon
+                            iconSize: Appearance.font.pixelSize.normal
+                            color: menuRow.modelData.danger ? Appearance.colors.colError : Appearance.colors.colOnLayer0
+                        }
+                        StyledText {
+                            text: menuRow.modelData.text
+                            color: menuRow.modelData.danger ? Appearance.colors.colError : Appearance.colors.colOnLayer0
+                        }
+                    }
+                }
+            }
+        }
     }
 
     contentItem: Loader {

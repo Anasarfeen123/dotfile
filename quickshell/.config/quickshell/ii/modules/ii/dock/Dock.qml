@@ -28,7 +28,28 @@ Scope { // Scope
             screen: modelData
             visible: !GlobalStates.screenLocked
 
-            property bool reveal: root.pinned || (Config.options?.dock.hoverToReveal && dockMouseArea.containsMouse) || dockApps.requestDockShow || (!ToplevelManager.activeToplevel?.activated)
+            // Debounced: show instantly, but hide only after a short grace
+            // period. Without this, a momentary null-focus blip between
+            // closing one window and the next one activating (part of
+            // `reveal`'s condition below) made the dock flicker
+            // show/hide/show within the same transition.
+            readonly property bool wantsReveal: root.pinned || (Config.options?.dock.hoverToReveal && dockMouseArea.containsMouse) || dockApps.requestDockShow || (!ToplevelManager.activeToplevel?.activated)
+            property bool reveal: wantsReveal
+
+            onWantsRevealChanged: {
+                if (wantsReveal) {
+                    hideDelayTimer.stop();
+                    reveal = true;
+                } else {
+                    hideDelayTimer.restart();
+                }
+            }
+
+            Timer {
+                id: hideDelayTimer
+                interval: 180
+                onTriggered: dockRoot.reveal = dockRoot.wantsReveal
+            }
 
             anchors {
                 bottom: true
