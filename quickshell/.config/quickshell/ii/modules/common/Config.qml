@@ -462,6 +462,11 @@ Singleton {
                 property JsonObject security: JsonObject {
                     property bool unlockKeyring: true
                     property bool requirePasswordToPower: false
+                    // Briefly shows the character just typed before masking
+                    // it (like a phone keyboard), and whether the
+                    // reveal-password eye-icon toggle is available at all.
+                    property bool peekLastChar: true
+                    property bool allowRevealToggle: true
                 }
                 property bool materialShapeChars: true
             }

@@ -14,6 +14,11 @@ StyledFlickable {
     property int selectionStart
     property int selectionEnd
     property int cursorPosition
+    // The character just typed briefly shows as plaintext at peekIndex
+    // instead of its shape, then reverts — peekIndex is -1 the rest of
+    // the time (LockSurface clears it on a timer).
+    property string peekChar: ""
+    property int peekIndex: -1
 
     property color color: Appearance.colors.colPrimary
     property color selectedTextColor: Appearance.colors.colOnSecondaryContainer
@@ -62,8 +67,25 @@ StyledFlickable {
                 implicitWidth: root.charSize
                 implicitHeight: root.charSize
                 property bool selected: index >= root.selectionStart && index < root.selectionEnd
+                readonly property bool isPeeking: index === root.peekIndex
 
                 color: ColorUtils.transparentize(root.selectionColor, selected ? 0 : 1)
+
+                // Briefly shows the actual character on top of its shape
+                // right after it's typed, then fades back to just the
+                // shape — same idea as a phone keyboard flashing the key
+                // you pressed before masking it.
+                StyledText {
+                    anchors.centerIn: parent
+                    visible: opacity > 0
+                    opacity: charItem.isPeeking ? 1 : 0
+                    text: charItem.isPeeking ? root.peekChar : ""
+                    font.pixelSize: root.charSize * 0.7
+                    color: root.color
+                    Behavior on opacity {
+                        NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                    }
+                }
                 
                 MaterialShape {
                     id: materialShape

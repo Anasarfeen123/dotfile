@@ -19,6 +19,18 @@ MouseArea {
     property bool showInputField: active || context.currentText.length > 0
     readonly property bool requirePasswordToPower: Config.options.lock.security.requirePasswordToPower
 
+    // Reveal-password toggle (eye icon) and the brief per-character peek,
+    // both togglable via config.json (lock.security.allowRevealToggle /
+    // .peekLastChar).
+    property bool revealPassword: false
+    property string lastTypedChar: ""
+    property int lastTypedCharIndex: -1
+    Timer {
+        id: peekClearTimer
+        interval: 550
+        onTriggered: root.lastTypedCharIndex = -1
+    }
+
     // Force focus on entry
     function forceFieldFocus() {
         passwordBox.forceActiveFocus();
@@ -206,11 +218,20 @@ MouseArea {
 
             // Password
             enabled: !root.context.unlockInProgress
-            echoMode: TextInput.Password
+            echoMode: root.revealPassword ? TextInput.Normal : TextInput.Password
             inputMethodHints: Qt.ImhSensitiveData
 
             // Synchronizing (across monitors) and unlocking
-            onTextChanged: root.context.currentText = this.text
+            onTextChanged: {
+                // One character typed (not pasted/deleted/selection-replaced)
+                // -> note it for the brief peek in PasswordChars below.
+                if (Config.options.lock.security.peekLastChar && this.text.length === root.context.currentText.length + 1) {
+                    root.lastTypedChar = this.text[this.text.length - 1];
+                    root.lastTypedCharIndex = this.text.length - 1;
+                    peekClearTimer.restart();
+                }
+                root.context.currentText = this.text;
+            }
             onAccepted: {
                 root.context.tryUnlock(ctrlHeld);
             }
@@ -246,8 +267,9 @@ MouseArea {
                 }
             }
 
-            // We're drawing dots manually
-            property bool materialShapeChars: Config.options.lock.materialShapeChars
+            // We're drawing dots manually — but not when revealing plaintext,
+            // there's nothing to draw over in that case.
+            property bool materialShapeChars: Config.options.lock.materialShapeChars && !root.revealPassword
             color: ColorUtils.transparentize(Appearance.colors.colOnLayer1, materialShapeChars ? 1 : 0)
             Loader {
                 active: passwordBox.materialShapeChars
@@ -261,7 +283,28 @@ MouseArea {
                     selectionStart: passwordBox.selectionStart
                     selectionEnd: passwordBox.selectionEnd
                     cursorPosition: passwordBox.cursorPosition
+                    peekChar: root.lastTypedChar
+                    peekIndex: root.lastTypedCharIndex
                 }
+            }
+        }
+
+        ToolbarButton {
+            id: revealToggleButton
+            visible: Config.options.lock.security.allowRevealToggle
+            implicitWidth: height
+            toggled: root.revealPassword
+            onClicked: root.revealPassword = !root.revealPassword
+
+            contentItem: MaterialSymbol {
+                anchors.centerIn: parent
+                iconSize: 22
+                text: root.revealPassword ? "visibility_off" : "visibility"
+                color: revealToggleButton.toggled ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnSurfaceVariant
+            }
+
+            StyledToolTip {
+                text: root.revealPassword ? Translation.tr("Hide password") : Translation.tr("Show password")
             }
         }
 
@@ -270,9 +313,27 @@ MouseArea {
             implicitWidth: height
             toggled: true
             enabled: !root.context.unlockInProgress
-            colBackgroundToggled: Appearance.colors.colPrimary
+            // Flashes to a success green for the brief window between PAM
+            // approving the password and the lock screen actually hiding
+            // (see LockContext's successDelayTimer) — otherwise correct
+            // and incorrect both just look like "the field cleared".
+            colBackgroundToggled: root.context.justSucceeded ? Appearance.m3colors.m3success : Appearance.colors.colPrimary
+            Behavior on colBackgroundToggled {
+                animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+            }
 
             onClicked: root.context.tryUnlock()
+
+            SuccessPulseAnimation {
+                id: successPulse
+                target: confirmButton
+            }
+            Connections {
+                target: root.context
+                function onJustSucceededChanged() {
+                    if (root.context.justSucceeded) successPulse.restart();
+                }
+            }
 
             contentItem: MaterialSymbol {
                 anchors.centerIn: parent
@@ -280,6 +341,7 @@ MouseArea {
                 verticalAlignment: Text.AlignVCenter
                 iconSize: 24
                 text: {
+                    if (root.context.justSucceeded) return "check";
                     if (root.context.targetAction === LockContext.ActionEnum.Unlock) {
                         return root.ctrlHeld ? "coffee" : "arrow_right_alt";
                     } else if (root.context.targetAction === LockContext.ActionEnum.Poweroff) {
@@ -288,7 +350,10 @@ MouseArea {
                         return "restart_alt";
                     }
                 }
-                color: confirmButton.enabled ? Appearance.colors.colOnPrimary : Appearance.colors.colSubtext
+                color: root.context.justSucceeded ? Appearance.m3colors.m3onSuccess : (confirmButton.enabled ? Appearance.colors.colOnPrimary : Appearance.colors.colSubtext)
+                Behavior on color {
+                    animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+                }
             }
         }
     }

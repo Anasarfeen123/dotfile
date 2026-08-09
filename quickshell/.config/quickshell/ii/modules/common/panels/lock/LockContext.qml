@@ -22,6 +22,12 @@ Scope {
     property bool fingerprintsConfigured: false
     property var targetAction: LockContext.ActionEnum.Unlock
     property bool alsoInhibitIdle: false
+    // Pulsed true right when PAM/fingerprint auth succeeds, for lock
+    // surfaces to play a success animation against — the actual unlocked()
+    // signal (which hides the lock screen) is held back briefly so that
+    // animation has time to be seen at all instead of being cut off by an
+    // instant unlock.
+    property bool justSucceeded: false
 
     function resetTargetAction() {
         root.targetAction = LockContext.ActionEnum.Unlock;
@@ -39,6 +45,7 @@ Scope {
         root.resetTargetAction();
         root.clearText();
         root.unlockInProgress = false;
+        root.justSucceeded = false;
         stopFingerPam();
     }
 
@@ -95,6 +102,22 @@ Scope {
         }
     }
     
+    // Success is shown immediately (justSucceeded pulses true) but the
+    // actual unlock — which hides the lock screen — waits for this timer,
+    // so there's time to see the success animation play at all.
+    Timer {
+        id: successDelayTimer
+        interval: 380
+        onTriggered: {
+            root.unlocked(root.targetAction);
+            stopFingerPam();
+        }
+    }
+    function succeed() {
+        justSucceeded = true;
+        successDelayTimer.restart();
+    }
+
     PamContext {
         id: pam
 
@@ -108,8 +131,7 @@ Scope {
         // pam_unix won't send any important messages so all we need is the completion status.
         onCompleted: result => {
             if (result == PamResult.Success) {
-                root.unlocked(root.targetAction);
-                stopFingerPam();
+                root.succeed();
             } else {
                 root.clearText();
                 root.unlockInProgress = false;
@@ -127,8 +149,7 @@ Scope {
 
         onCompleted: result => {
             if (result == PamResult.Success) {
-                root.unlocked(root.targetAction);
-                stopFingerPam();
+                root.succeed();
             } else if (result == PamResult.Error) { // if timeout or etc..
                 tryFingerUnlock()
             }
