@@ -20,7 +20,25 @@ Scope {
         property string searchingText: ""
         readonly property HyprlandMonitor monitor: Hyprland.monitorFor(panelWindow.screen)
         property bool monitorIsFocused: (Hyprland.focusedMonitor?.id == monitor?.id)
-        visible: GlobalStates.overviewOpen
+
+        // Kept mapped a beat past overviewOpen going false so the exit
+        // animation on columnLayout below has time to actually play —
+        // otherwise the surface unmaps instantly and cuts the fade off.
+        readonly property bool wantsOpen: GlobalStates.overviewOpen
+        property bool closing: false
+        visible: wantsOpen || closing
+
+        onWantsOpenChanged: {
+            closeTimer.stop();
+            closing = wantsOpen ? false : true;
+            if (closing) closeTimer.start();
+        }
+
+        Timer {
+            id: closeTimer
+            interval: Appearance.animation.elementMoveExit.duration + 30
+            onTriggered: panelWindow.closing = false
+        }
 
         WlrLayershell.namespace: "quickshell:overview"
         WlrLayershell.layer: WlrLayer.Top
@@ -70,12 +88,45 @@ Scope {
 
         Column {
             id: columnLayout
-            visible: GlobalStates.overviewOpen
             anchors {
                 horizontalCenter: parent.horizontalCenter
                 top: parent.top
             }
             spacing: -8
+
+            // Grows out of the top bar rather than just popping in: scales
+            // and slides down from the top edge while fading, same
+            // enter/exit motion tokens as the bar's own hover popups.
+            visible: opacity > 0
+            opacity: panelWindow.wantsOpen ? 1 : 0
+            scale: panelWindow.wantsOpen ? 1 : 0.92
+            transformOrigin: Item.Top
+            transform: Translate {
+                id: columnLayoutTranslate
+                y: panelWindow.wantsOpen ? 0 : -14
+
+                Behavior on y {
+                    NumberAnimation {
+                        duration: panelWindow.wantsOpen ? Appearance.animation.elementMoveEnter.duration : Appearance.animation.elementMoveExit.duration
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: panelWindow.wantsOpen ? Appearance.animationCurves.emphasizedDecel : Appearance.animationCurves.emphasizedAccel
+                    }
+                }
+            }
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: panelWindow.wantsOpen ? Appearance.animation.elementMoveEnter.duration : Appearance.animation.elementMoveExit.duration
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: panelWindow.wantsOpen ? Appearance.animationCurves.emphasizedDecel : Appearance.animationCurves.emphasizedAccel
+                }
+            }
+            Behavior on scale {
+                NumberAnimation {
+                    duration: panelWindow.wantsOpen ? Appearance.animation.elementMoveEnter.duration : Appearance.animation.elementMoveExit.duration
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: panelWindow.wantsOpen ? Appearance.animationCurves.emphasizedDecel : Appearance.animationCurves.emphasizedAccel
+                }
+            }
 
             Keys.onPressed: event => {
                 if (event.key === Qt.Key_Escape) {
@@ -94,7 +145,7 @@ Scope {
             Loader {
                 id: overviewLoader
                 anchors.horizontalCenter: parent.horizontalCenter
-                active: GlobalStates.overviewOpen && (Config?.options.overview.enable ?? true)
+                active: (panelWindow.wantsOpen || panelWindow.closing) && (Config?.options.overview.enable ?? true)
                 sourceComponent: OverviewWidget {
                     screen: panelWindow.screen
                     visible: (panelWindow.searchingText == "")

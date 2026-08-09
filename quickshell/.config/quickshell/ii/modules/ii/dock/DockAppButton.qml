@@ -20,14 +20,45 @@ DockButton {
 
     readonly property bool isSeparator: appToplevel.appId === "SEPARATOR"
     property var desktopEntry: DesktopEntries.heuristicLookup(appToplevel.appId)
+    // True once we've tried and failed to find a matching .desktop entry.
+    // Every dock icon should still do *something* when clicked rather than
+    // silently no-op, so this drives both a raw-command fallback below and
+    // a dimmed look so a broken pin is visibly distinguishable.
+    readonly property bool unresolvable: !isSeparator && !desktopEntry
     enabled: !isSeparator
     implicitWidth: isSeparator ? 1 : implicitHeight - topInset - bottomInset
+
+    function launch() {
+        if (root.desktopEntry) {
+            root.desktopEntry.execute();
+        } else {
+            // No matching .desktop entry — fall back to running the appId
+            // itself as a command rather than doing nothing.
+            Quickshell.execDetached(["sh", "-c", appToplevel.appId]);
+        }
+    }
 
     property bool isHovered: mouseAreaLoader.item ? mouseAreaLoader.item.containsMouse : false
     property real yOffset: isHovered ? -8 : 0
     property real bounceOffset: 0
 
-    scale: isHovered ? 1.30 : 1.0
+    // The classic macOS dock trick: icons near the pointer grow a little
+    // too, tapering off with distance, so the hovered icon doesn't look
+    // like it's growing in isolation. Purely additive on top of the
+    // existing isHovered scale below — the hovered button's own 1.30 is
+    // untouched, this only ever affects its neighbors.
+    property real neighborBoost: {
+        if (isHovered || isSeparator) return 0;
+        const px = appListRoot?.pointerX ?? -1;
+        if (px < 0) return 0;
+        const maxDist = 70;
+        const dist = Math.abs((root.x + root.width / 2) - px);
+        if (dist >= maxDist) return 0;
+        const t = 1 - dist / maxDist;
+        return 0.18 * t * t;
+    }
+
+    scale: (isHovered ? 1.30 : 1.0) + neighborBoost
     Behavior on scale {
         NumberAnimation {
             duration: 200
@@ -54,7 +85,9 @@ DockButton {
     }
 
     StyledToolTip {
-        text: root.desktopEntry?.name || appToplevel.appId
+        text: root.desktopEntry?.name || (root.unresolvable
+            ? Translation.tr("%1 (no matching app found, will try to run it directly)").arg(appToplevel.appId)
+            : appToplevel.appId)
         extraVisibleCondition: root.isHovered
     }
 
@@ -101,7 +134,7 @@ DockButton {
     onClicked: {
         launchBounceAnim.restart();
         if (appToplevel.toplevels.length === 0) {
-            root.desktopEntry?.execute();
+            root.launch();
             return;
         }
         lastFocused = (lastFocused + 1) % appToplevel.toplevels.length
@@ -109,7 +142,8 @@ DockButton {
     }
 
     middleClickAction: () => {
-        root.desktopEntry?.execute();
+        launchBounceAnim.restart();
+        root.launch();
     }
 
     altAction: () => {
@@ -132,6 +166,13 @@ DockButton {
                 sourceComponent: IconImage {
                     source: Quickshell.iconPath(AppSearch.guessIcon(appToplevel.appId), "image-missing")
                     implicitSize: root.iconSize
+                    // No .desktop entry matched this appId — dim the icon so
+                    // a dead pin is visibly distinguishable rather than
+                    // looking identical to a working one.
+                    opacity: root.unresolvable ? 0.5 : 1
+                    Behavior on opacity {
+                        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                    }
                 }
             }
 

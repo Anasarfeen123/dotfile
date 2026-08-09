@@ -22,6 +22,13 @@ Item {
     property bool buttonHovered: false
     property bool requestDockShow: previewPopup.show
 
+    // x of the pointer within the row (listView's coordinate space, same
+    // one each DockAppButton's own `x` lives in), or -1 when not hovering
+    // the row at all. Drives the neighbor-magnification falloff in
+    // DockAppButton — a passive HoverHandler so it never interferes with
+    // the buttons' own click/hover handling underneath.
+    property real pointerX: -1
+
     Layout.fillHeight: true
     Layout.topMargin: Appearance.sizes.hyprlandGapsOut
     implicitWidth: listView.implicitWidth
@@ -44,6 +51,12 @@ Item {
 
         Behavior on implicitWidth {
             animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+        }
+
+        HoverHandler {
+            id: rowHover
+            onPointChanged: root.pointerX = point.position.x
+            onHoveredChanged: if (!hovered) root.pointerX = -1
         }
 
         model: ScriptModel {

@@ -37,13 +37,20 @@ TabBar {
         // the fast, punchier one — the underline snaps into place first and
         // the glow catches up a beat behind it, instead of both just
         // teleporting together.
+        // Inset well clear of the bottom so it never crowds the underline —
+        // they're two distinct bands (pill = tab body, underline = accent
+        // stripe), not one smear.
         Rectangle {
             id: activePill
-            z: 9998
-            anchors.verticalCenter: parent.verticalCenter
+            z: 9997
+            anchors {
+                top: parent.top
+                bottom: parent.bottom
+                topMargin: 4
+                bottomMargin: 9
+            }
             radius: Appearance.rounding.normal
             color: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.12)
-            height: parent.height - 12
             x: root.currentTabX + root.indicatorPadding
             width: Math.max(0, root.currentTabWidth - root.indicatorPadding * 2)
 
