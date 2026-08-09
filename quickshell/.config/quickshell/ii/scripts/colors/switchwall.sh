@@ -57,6 +57,7 @@ post_process() {
 
     handle_kde_material_you_colors &
     "$SCRIPT_DIR/code/material-code-set-color.sh" &
+    "$XDG_CONFIG_HOME/hypr/hyprlock/generate_lock_background.sh" "$wallpaper_path" &
 }
 
 sync_sddm_theme() {
