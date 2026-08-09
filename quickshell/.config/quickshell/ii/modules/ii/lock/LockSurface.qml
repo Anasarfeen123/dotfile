@@ -38,9 +38,16 @@ MouseArea {
         forceFieldFocus();
     }
 
-    // Toolbar appearing animation
+    // Toolbar appearing animation: scale + fade + a rise-up from below,
+    // and the side toolbars land a beat after the main one instead of all
+    // three popping in simultaneously — an assembling feel rather than one
+    // flat fade.
     property real toolbarScale: 0.9
     property real toolbarOpacity: 0
+    property real toolbarY: 18
+    property real sideToolbarScale: 0.9
+    property real sideToolbarOpacity: 0
+    property real sideToolbarY: 18
     Behavior on toolbarScale {
         NumberAnimation {
             duration: Appearance.animation.elementMove.duration
@@ -51,12 +58,69 @@ MouseArea {
     Behavior on toolbarOpacity {
         animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
     }
+    Behavior on toolbarY {
+        NumberAnimation {
+            duration: Appearance.animation.elementMove.duration
+            easing.type: Appearance.animation.elementMove.type
+            easing.bezierCurve: Appearance.animationCurves.expressiveFastSpatial
+        }
+    }
+    Behavior on sideToolbarScale {
+        NumberAnimation {
+            duration: Appearance.animation.elementMove.duration
+            easing.type: Appearance.animation.elementMove.type
+            easing.bezierCurve: Appearance.animationCurves.expressiveFastSpatial
+        }
+    }
+    Behavior on sideToolbarOpacity {
+        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+    }
+    Behavior on sideToolbarY {
+        NumberAnimation {
+            duration: Appearance.animation.elementMove.duration
+            easing.type: Appearance.animation.elementMove.type
+            easing.bezierCurve: Appearance.animationCurves.expressiveFastSpatial
+        }
+    }
 
     // Init
     Component.onCompleted: {
         forceFieldFocus();
         toolbarScale = 1;
         toolbarOpacity = 1;
+        toolbarY = 0;
+        sideToolbarStagger.start();
+        focusRetryTimer.start();
+    }
+
+    Timer {
+        id: sideToolbarStagger
+        interval: 90
+        onTriggered: {
+            root.sideToolbarScale = 1;
+            root.sideToolbarOpacity = 1;
+            root.sideToolbarY = 0;
+        }
+    }
+
+    // A single forceActiveFocus() on completion races against the
+    // compositor actually granting this surface keyboard focus (the same
+    // known issue the "lockFocus" GlobalShortcut in LockScreen.qml exists
+    // to work around manually — "Hyprland after waking up for whatever
+    // reason decides to keyboard-unfocus the lock screen"). Instead of
+    // requiring you to click or hit that shortcut yourself, retry for the
+    // first second or so after locking, which reliably wins the race
+    // without needing any manual step.
+    Timer {
+        id: focusRetryTimer
+        interval: 100
+        repeat: true
+        property int attempts: 0
+        onTriggered: {
+            attempts += 1;
+            if (!passwordBox.activeFocus) root.forceFieldFocus();
+            if (passwordBox.activeFocus || attempts >= 10) stop();
+        }
     }
 
     // Key presses
@@ -110,6 +174,7 @@ MouseArea {
 
         scale: root.toolbarScale
         opacity: root.toolbarOpacity
+        transform: Translate { y: root.toolbarY }
 
         // Fingerprint
         Loader {
@@ -237,8 +302,9 @@ MouseArea {
             bottom: mainIsland.bottom
             rightMargin: 10
         }
-        scale: root.toolbarScale
-        opacity: root.toolbarOpacity
+        scale: root.sideToolbarScale
+        opacity: root.sideToolbarOpacity
+        transform: Translate { y: root.sideToolbarY }
 
         // Username
         IconAndTextPair {
@@ -298,8 +364,9 @@ MouseArea {
             leftMargin: 10
         }
 
-        scale: root.toolbarScale
-        opacity: root.toolbarOpacity
+        scale: root.sideToolbarScale
+        opacity: root.sideToolbarOpacity
+        transform: Translate { y: root.sideToolbarY }
 
         IconAndTextPair {
             visible: Battery.available
