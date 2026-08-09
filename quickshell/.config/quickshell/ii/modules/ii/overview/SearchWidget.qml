@@ -170,7 +170,12 @@ Item { // Wrapper
                 color: ColorUtils.applyAlpha(Appearance.colors.colOutlineVariant, 0.6)
             }
 
-            ListView { // App results
+            // Was a plain ListView — results popping in/reordering as you
+            // type had zero animation, they just instantly appeared and
+            // snapped into position. StyledListView adds the same fade+pop
+            // add/remove transitions notifications and other lists already
+            // use elsewhere in the shell.
+            StyledListView { // App results
                 id: appResults
                 visible: root.showResults
                 Layout.fillWidth: true

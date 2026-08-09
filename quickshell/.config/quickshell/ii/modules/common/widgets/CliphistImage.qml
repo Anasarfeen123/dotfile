@@ -88,6 +88,13 @@ Rectangle {
 
         width: root.imageWidth * root.scale
         height: root.imageHeight * root.scale
+
+        // Was a hard pop the instant the async decode finished — fades in
+        // instead now that it's actually ready to show.
+        opacity: status === Image.Ready ? 1 : 0
+        Behavior on opacity {
+            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+        }
     }
 
     Loader {
