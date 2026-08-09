@@ -46,7 +46,7 @@ Scope {
         color: "transparent"
 
         mask: Region {
-            item: GlobalStates.overviewOpen ? columnLayout : null
+            item: GlobalStates.overviewOpen ? revealClip : null
         }
 
         anchors {
@@ -86,69 +86,71 @@ Scope {
             searchWidget.focusFirstItem();
         }
 
-        Column {
-            id: columnLayout
+        // Clips columnLayout to an animated height instead of scaling/fading
+        // it: a literal curtain dropping down from the top edge (the bar),
+        // which reads unambiguously as "growing out of the bar" rather than
+        // just a fade. The actual window stays full-sized underneath (see
+        // implicitWidth/implicitHeight above) so the Wayland surface itself
+        // never resizes — only this wrapper's clip height animates.
+        Item {
+            id: revealClip
             anchors {
                 horizontalCenter: parent.horizontalCenter
                 top: parent.top
             }
-            spacing: -8
+            width: columnLayout.implicitWidth
+            height: panelWindow.wantsOpen ? columnLayout.implicitHeight : 0
+            clip: true
 
-            // Grows out of the top bar rather than just popping in: scales
-            // and slides down from the top edge while fading, same
-            // enter/exit motion tokens as the bar's own hover popups.
-            visible: opacity > 0
-            opacity: panelWindow.wantsOpen ? 1 : 0
-            scale: panelWindow.wantsOpen ? 1 : 0.92
-            transformOrigin: Item.Top
-            transform: Translate {
-                id: columnLayoutTranslate
-                y: panelWindow.wantsOpen ? 0 : -14
+            Behavior on height {
+                NumberAnimation {
+                    duration: panelWindow.wantsOpen ? Appearance.animation.elementMoveEnter.duration : Appearance.animation.elementMoveExit.duration
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: panelWindow.wantsOpen ? Appearance.animationCurves.emphasizedDecel : Appearance.animationCurves.emphasizedAccel
+                }
+            }
 
-                Behavior on y {
+            Column {
+                id: columnLayout
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                    top: parent.top
+                }
+                spacing: -8
+
+                // A light fade on top of the height-reveal just softens the
+                // unmasking edge; it's not the primary motion cue here.
+                opacity: panelWindow.wantsOpen ? 1 : 0
+                Behavior on opacity {
                     NumberAnimation {
                         duration: panelWindow.wantsOpen ? Appearance.animation.elementMoveEnter.duration : Appearance.animation.elementMoveExit.duration
                         easing.type: Easing.BezierSpline
                         easing.bezierCurve: panelWindow.wantsOpen ? Appearance.animationCurves.emphasizedDecel : Appearance.animationCurves.emphasizedAccel
                     }
                 }
-            }
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: panelWindow.wantsOpen ? Appearance.animation.elementMoveEnter.duration : Appearance.animation.elementMoveExit.duration
-                    easing.type: Easing.BezierSpline
-                    easing.bezierCurve: panelWindow.wantsOpen ? Appearance.animationCurves.emphasizedDecel : Appearance.animationCurves.emphasizedAccel
-                }
-            }
-            Behavior on scale {
-                NumberAnimation {
-                    duration: panelWindow.wantsOpen ? Appearance.animation.elementMoveEnter.duration : Appearance.animation.elementMoveExit.duration
-                    easing.type: Easing.BezierSpline
-                    easing.bezierCurve: panelWindow.wantsOpen ? Appearance.animationCurves.emphasizedDecel : Appearance.animationCurves.emphasizedAccel
-                }
-            }
 
-            Keys.onPressed: event => {
-                if (event.key === Qt.Key_Escape) {
-                    GlobalStates.overviewOpen = false;
+                Keys.onPressed: event => {
+                    if (event.key === Qt.Key_Escape) {
+                        GlobalStates.overviewOpen = false;
+                    }
                 }
-            }
 
-            SearchWidget {
-                id: searchWidget
-                anchors.horizontalCenter: parent.horizontalCenter
-                Synchronizer on searchingText {
-                    property alias source: panelWindow.searchingText
+                SearchWidget {
+                    id: searchWidget
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Synchronizer on searchingText {
+                        property alias source: panelWindow.searchingText
+                    }
                 }
-            }
 
-            Loader {
-                id: overviewLoader
-                anchors.horizontalCenter: parent.horizontalCenter
-                active: (panelWindow.wantsOpen || panelWindow.closing) && (Config?.options.overview.enable ?? true)
-                sourceComponent: OverviewWidget {
-                    screen: panelWindow.screen
-                    visible: (panelWindow.searchingText == "")
+                Loader {
+                    id: overviewLoader
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    active: (panelWindow.wantsOpen || panelWindow.closing) && (Config?.options.overview.enable ?? true)
+                    sourceComponent: OverviewWidget {
+                        screen: panelWindow.screen
+                        visible: (panelWindow.searchingText == "")
+                    }
                 }
             }
         }

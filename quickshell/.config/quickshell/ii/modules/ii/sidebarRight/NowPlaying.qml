@@ -109,13 +109,12 @@ StyledGlassSurface {
             Layout.alignment: Qt.AlignVCenter
             spacing: 2
 
-            StyledText {
+            MarqueeText {
                 Layout.fillWidth: true
                 text: root.player?.trackTitle ?? Translation.tr("Nothing playing")
                 font.pixelSize: Appearance.font.pixelSize.small
                 font.weight: Font.DemiBold
                 color: blendedColors.colOnLayer1
-                elide: Text.ElideRight
             }
             StyledText {
                 Layout.fillWidth: true

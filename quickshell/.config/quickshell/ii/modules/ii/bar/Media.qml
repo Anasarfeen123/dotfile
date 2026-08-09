@@ -72,14 +72,15 @@ Item {
             }
         }
 
-        StyledText {
+        MarqueeText {
+            // Marquees read as left-anchored tickers by convention (centering
+            // a scrolling line looks wrong), unlike the plain StyledText this
+            // replaces which centered short titles.
             visible: Config.options.bar.verbose
             width: rowLayout.width - (CircularProgress.size + rowLayout.spacing * 2)
             Layout.alignment: Qt.AlignVCenter
             Layout.fillWidth: true // Ensures the text takes up available space
             Layout.rightMargin: rowLayout.spacing
-            horizontalAlignment: Text.AlignHCenter
-            elide: Text.ElideRight // Truncates the text on the right
             color: Appearance.colors.colOnLayer1
             text: `${cleanedTitle}${activePlayer?.trackArtist ? ' • ' + activePlayer.trackArtist : ''}`
         }
