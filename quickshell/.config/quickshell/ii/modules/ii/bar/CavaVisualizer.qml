@@ -16,13 +16,34 @@ Item {
     readonly property int half: barCount / 2
     readonly property real totalWidth: barCount * step - barSpacing
     readonly property real center: totalWidth / 2
+    // Set by BarContent while the Resources (system usage) widget is
+    // hovered and expanding inline, so the two never overlap: this
+    // collapses out of the way instead of fighting it for space.
+    property bool collapsed: false
     implicitWidth: totalWidth + 8
     implicitHeight: 22
     width: implicitWidth
     height: implicitHeight
-    Layout.preferredWidth: implicitWidth
+    clip: true
+    Layout.preferredWidth: collapsed ? 0 : implicitWidth
     Layout.preferredHeight: implicitHeight
     Layout.alignment: Qt.AlignVCenter
+    opacity: collapsed ? 0 : 1
+
+    Behavior on Layout.preferredWidth {
+        NumberAnimation {
+            duration: Appearance.animation.elementMove.duration
+            easing.type: Appearance.animation.elementMove.type
+            easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+        }
+    }
+    Behavior on opacity {
+        NumberAnimation {
+            duration: Appearance.animation.elementMoveFast.duration
+            easing.type: Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+        }
+    }
 
     function barX(i) {
         if (i < root.half) return root.center - (root.half - i) * root.step;

@@ -115,6 +115,7 @@ Item { // Bar content region
             implicitWidth: root.centerSideModuleWidth
 
             Resources {
+                id: resourcesWidget
                 alwaysShowAllResources: root.useShortenedForm === 2
                 Layout.fillWidth: root.useShortenedForm === 2
             }
@@ -127,6 +128,7 @@ Item { // Bar content region
             CavaVisualizer {
                 visible: root.useShortenedForm < 2 && Config.options.bar.showVisualizer
                 Layout.alignment: Qt.AlignVCenter
+                collapsed: resourcesWidget.containsMouse
             }
         }
 

@@ -28,11 +28,7 @@ MouseArea {
         Resource {
             iconName: "swap_horiz"
             percentage: ResourceUsage.swapUsedPercentage
-            // Hover detail already lives in ResourcesPopup below; expanding
-            // inline here on hover pushed Media/CavaVisualizer sideways and
-            // overlapped the music visualizer, since this bar group has a
-            // fixed width. Only expand for the "always show" shortened form.
-            shown: root.alwaysShowAllResources
+            shown: root.containsMouse || root.alwaysShowAllResources
             Layout.leftMargin: shown ? 6 : 0
             warningThreshold: Config.options.bar.resources.swapWarningThreshold
         }
@@ -48,7 +44,7 @@ MouseArea {
         Resource {
             iconName: ResourceUsage.gpuHighTemp ? "local_fire_department" : "sports_esports"
             percentage: ResourceUsage.gpuUsage
-            shown: root.alwaysShowAllResources || ResourceUsage.gpuHighTemp
+            shown: root.containsMouse || ResourceUsage.gpuHighTemp
             Layout.leftMargin: shown ? 6 : 0
             warningThreshold: ResourceUsage.gpuHighTemp ? 0 : 90
         }
@@ -56,7 +52,7 @@ MouseArea {
         Resource {
             iconName: "hard_drive"
             percentage: ResourceUsage.diskUsedPercentage
-            shown: root.alwaysShowAllResources
+            shown: root.containsMouse
             Layout.leftMargin: shown ? 6 : 0
             warningThreshold: 90
         }
