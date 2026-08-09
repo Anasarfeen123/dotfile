@@ -1,8 +1,10 @@
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import Qt.labs.synchronizer
+import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -21,9 +23,9 @@ Scope {
         readonly property HyprlandMonitor monitor: Hyprland.monitorFor(panelWindow.screen)
         property bool monitorIsFocused: (Hyprland.focusedMonitor?.id == monitor?.id)
 
-        // Kept mapped a beat past overviewOpen going false so the exit
-        // animation on columnLayout below has time to actually play —
-        // otherwise the surface unmaps instantly and cuts the fade off.
+        // Kept mapped a beat past overviewOpen going false so the shrink
+        // animation on revealClip below has time to actually play —
+        // otherwise the surface unmaps instantly and cuts it off mid-way.
         readonly property bool wantsOpen: GlobalStates.overviewOpen
         property bool closing: false
         visible: wantsOpen || closing
@@ -36,7 +38,10 @@ Scope {
 
         Timer {
             id: closeTimer
-            interval: Appearance.animation.elementMoveExit.duration + 30
+            // Matches revealClip's IslandSpring duration (480ms) + margin —
+            // has to outlast the shrink-to-pill animation or the window
+            // unmaps mid-shrink.
+            interval: 480 + 60
             onTriggered: panelWindow.closing = false
         }
 
@@ -86,28 +91,62 @@ Scope {
             searchWidget.focusFirstItem();
         }
 
-        // Clips columnLayout to an animated height instead of scaling/fading
-        // it: a literal curtain dropping down from the top edge (the bar),
-        // which reads unambiguously as "growing out of the bar" rather than
-        // just a fade. The actual window stays full-sized underneath (see
-        // implicitWidth/implicitHeight above) so the Wayland surface itself
-        // never resizes — only this wrapper's clip height animates.
+        // Dynamic-Island-style morph: a small pill sitting right at the
+        // bar's bottom edge grows into the full search+overview panel.
+        // Both width and height animate (not just height), the corner
+        // radius is always min(width,height)/2 — maximally rounded on the
+        // short axis, exactly like a real Dynamic Island's shape language —
+        // so it reads as a pill at small sizes and eases into a rounded
+        // rect once wide enough. No opacity animation anywhere: the content
+        // is simply revealed as the clip grows, never faded.
         Item {
             id: revealClip
             anchors {
                 horizontalCenter: parent.horizontalCenter
                 top: parent.top
             }
-            width: columnLayout.implicitWidth
-            height: panelWindow.wantsOpen ? columnLayout.implicitHeight : 0
-            clip: true
 
-            Behavior on height {
-                NumberAnimation {
-                    duration: panelWindow.wantsOpen ? Appearance.animation.elementMoveEnter.duration : Appearance.animation.elementMoveExit.duration
-                    easing.type: Easing.BezierSpline
-                    easing.bezierCurve: panelWindow.wantsOpen ? Appearance.animationCurves.emphasizedDecel : Appearance.animationCurves.emphasizedAccel
+            readonly property real collapsedWidth: 96
+            readonly property real collapsedHeight: 32
+            readonly property real islandRadius: Math.min(width, height) / 2
+
+            width: panelWindow.wantsOpen ? columnLayout.implicitWidth : collapsedWidth
+            height: panelWindow.wantsOpen ? columnLayout.implicitHeight : collapsedHeight
+
+            component IslandSpring: NumberAnimation {
+                // A springier, more pronounced curve than the usual
+                // elementMove — this is the hero motion of the whole
+                // panel, not a background chrome transition, so it earns
+                // a bit more bounce (expressiveDefaultSpatial already has
+                // overshoot built in; slowing it down further makes that
+                // overshoot actually readable instead of snapping past it).
+                duration: 480
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Appearance.animationCurves.expressiveDefaultSpatial
+            }
+            Behavior on width { IslandSpring {} }
+            Behavior on height { IslandSpring {} }
+
+            // Rounded-corner clipping (plain Item.clip only clips to the
+            // rectangular bounds, ignoring radius — this OpacityMask
+            // approach is the same one SearchWidget's own content already
+            // uses for exactly this reason).
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: revealClip.width
+                    height: revealClip.height
+                    radius: revealClip.islandRadius
                 }
+            }
+
+            // Fill visible during the collapsed/mid-transition states,
+            // before the real content (which has its own background) has
+            // grown large enough to cover the whole island itself.
+            Rectangle {
+                anchors.fill: parent
+                radius: revealClip.islandRadius
+                color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.72)
             }
 
             Column {
@@ -117,22 +156,6 @@ Scope {
                     top: parent.top
                 }
                 spacing: -8
-
-                // Deliberately much quicker than the height reveal below
-                // (120ms vs 400ms): opacity settling fast means the growing
-                // height is the only thing still visibly happening for most
-                // of the transition, instead of the two racing each other
-                // and the fade reading as the dominant cue — confirmed by
-                // screenshotting this at 150ms/300ms/700ms: the height
-                // genuinely was still growing well after opacity had
-                // already visually settled.
-                opacity: panelWindow.wantsOpen ? 1 : 0
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: 120
-                        easing.type: Easing.OutQuad
-                    }
-                }
 
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape) {
