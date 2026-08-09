@@ -93,6 +93,37 @@ Item {
         color: Appearance.colors.colLayer0Base
     }
 
+    // Explicit scroll buttons as a guaranteed way to reach the edges,
+    // regardless of whether wheel/trackpad scroll reaches the Flickable.
+    component ScrollStepButton: RippleButton {
+        id: stepBtn
+        required property real direction // -1 or 1
+        implicitWidth: 32
+        implicitHeight: 32
+        buttonRadius: Appearance.rounding.full
+        colBackground: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.85)
+        visible: stepBtn.direction < 0 ? flickable.contentY > 1 : flickable.contentY < flickable.contentHeight - flickable.height - 1
+        onClicked: {
+            const maxY = Math.max(0, flickable.contentHeight - flickable.height);
+            flickable.contentY = Math.max(0, Math.min(maxY, flickable.contentY + stepBtn.direction * flickable.height * 0.6));
+        }
+        contentItem: MaterialSymbol {
+            anchors.centerIn: parent
+            iconSize: 20
+            text: stepBtn.direction < 0 ? "keyboard_arrow_up" : "keyboard_arrow_down"
+            color: Appearance.colors.colOnLayer0
+        }
+    }
+
+    ScrollStepButton {
+        anchors { top: parent.top; horizontalCenter: parent.horizontalCenter; topMargin: 4 }
+        direction: -1
+    }
+    ScrollStepButton {
+        anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter; bottomMargin: 4 }
+        direction: 1
+    }
+
     component ReferenceCategory: Rectangle {
         id: card
         required property var categoryData

@@ -304,7 +304,7 @@ StyledGlassSurface {
             spacing: 4
 
             MaterialSymbol {
-                text: wsButton.occupied ? "lens" : "circle_outline"
+                text: "circle"
                 iconSize: 9
                 color: wsButton.active ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer1
                 fill: wsButton.occupied ? 1 : 0
