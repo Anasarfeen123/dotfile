@@ -1,0 +1,30 @@
+[config]
+version_check = false
+
+[templates.kitty]
+input_path = '~/.config/matugen/templates/kitty/kitty-theme.conf'
+output_path = '/tmp/kitty-matugen-colors.conf'
+
+[templates.nvim]
+input_path = '~/.config/matugen/templates/nvim/matugen_colors.lua'
+output_path = '~/.config/nvim/matugen_colors.lua'
+
+[templates.sddm]
+input_path = '~/.config/matugen/templates/sddm/silent-sddm.conf'
+output_path = '/tmp/sddm-matugen.conf'
+
+[templates.hyprlock]
+input_path = '~/.config/matugen/templates/hyprland/hyprlock-colors.conf'
+output_path = '~/.config/hypr/hyprlock/colors.conf'
+
+[templates.m3colors]
+input_path = '~/.config/matugen/templates/colors.json'
+output_path = '~/.local/state/quickshell/user/generated/colors.json'
+
+[templates.hyprland]
+input_path = '~/.config/matugen/templates/hyprland/colors.lua'
+output_path = '~/.config/hypr/hyprland/colors.lua'
+
+[templates.wallpaper]
+input_path = '~/.config/matugen/templates/wallpaper.txt'
+output_path = '~/.local/state/quickshell/user/generated/wallpaper/path.txt'

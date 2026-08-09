@@ -1,0 +1,178 @@
+import qs.services
+import qs.modules.common
+import qs.modules.common.widgets
+import qs.modules.common.functions
+import Qt5Compat.GraphicalEffects
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Widgets
+
+DockButton {
+    id: root
+    property var appToplevel
+    property var appListRoot
+    property int lastFocused: -1
+    property real iconSize: 35
+    property real countDotWidth: 10
+    property real countDotHeight: 4
+    property bool appIsActive: appToplevel.toplevels.find(t => (t.activated == true)) !== undefined
+
+    readonly property bool isSeparator: appToplevel.appId === "SEPARATOR"
+    property var desktopEntry: DesktopEntries.heuristicLookup(appToplevel.appId)
+    enabled: !isSeparator
+    implicitWidth: isSeparator ? 1 : implicitHeight - topInset - bottomInset
+
+    property bool isHovered: mouseAreaLoader.item ? mouseAreaLoader.item.containsMouse : false
+    property real yOffset: isHovered ? -8 : 0
+    property real bounceOffset: 0
+
+    scale: isHovered ? 1.30 : 1.0
+    Behavior on scale {
+        NumberAnimation {
+            duration: 200
+            easing.type: Easing.OutBack
+            easing.overshoot: 1.6
+        }
+    }
+
+    transform: Translate {
+        y: root.yOffset + root.bounceOffset
+        Behavior on y {
+            NumberAnimation {
+                duration: 180
+                easing.type: Easing.OutCubic
+            }
+        }
+    }
+
+    SequentialAnimation {
+        id: launchBounceAnim
+        running: false
+        NumberAnimation { target: root; property: "bounceOffset"; to: -14; duration: 140; easing.type: Easing.OutQuad }
+        NumberAnimation { target: root; property: "bounceOffset"; to: 0; duration: 240; easing.type: Easing.OutBounce }
+    }
+
+    StyledToolTip {
+        text: root.desktopEntry?.name || appToplevel.appId
+        extraVisibleCondition: root.isHovered
+    }
+
+    Connections {
+        target: DesktopEntries
+
+        function onApplicationsChanged() {
+            root.desktopEntry = DesktopEntries.heuristicLookup(appToplevel.appId);
+        }
+    }
+
+    Loader {
+        active: isSeparator
+        anchors {
+            fill: parent
+            topMargin: dockVisualBackground.margin + dockRow.padding + Appearance.rounding.normal
+            bottomMargin: dockVisualBackground.margin + dockRow.padding + Appearance.rounding.normal
+        }
+        sourceComponent: DockSeparator {}
+    }
+
+    Loader {
+        id: mouseAreaLoader
+        anchors.fill: parent
+        active: appToplevel.toplevels.length > 0
+        sourceComponent: MouseArea {
+            id: mouseArea
+            anchors.fill: parent
+            hoverEnabled: true
+            acceptedButtons: Qt.NoButton
+            onEntered: {
+                appListRoot.lastHoveredButton = root
+                appListRoot.buttonHovered = true
+                lastFocused = appToplevel.toplevels.length - 1
+            }
+            onExited: {
+                if (appListRoot.lastHoveredButton === root) {
+                    appListRoot.buttonHovered = false
+                }
+            }
+        }
+    }
+
+    onClicked: {
+        launchBounceAnim.restart();
+        if (appToplevel.toplevels.length === 0) {
+            root.desktopEntry?.execute();
+            return;
+        }
+        lastFocused = (lastFocused + 1) % appToplevel.toplevels.length
+        appToplevel.toplevels[lastFocused].activate()
+    }
+
+    middleClickAction: () => {
+        root.desktopEntry?.execute();
+    }
+
+    altAction: () => {
+        TaskbarApps.togglePin(appToplevel.appId);
+    }
+
+    contentItem: Loader {
+        active: !isSeparator
+        sourceComponent: Item {
+            anchors.centerIn: parent
+
+            Loader {
+                id: iconImageLoader
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    verticalCenter: parent.verticalCenter
+                }
+                active: !root.isSeparator
+                sourceComponent: IconImage {
+                    source: Quickshell.iconPath(AppSearch.guessIcon(appToplevel.appId), "image-missing")
+                    implicitSize: root.iconSize
+                }
+            }
+
+            Loader {
+                active: Config.options.dock.monochromeIcons
+                anchors.fill: iconImageLoader
+                sourceComponent: Item {
+                    Desaturate {
+                        id: desaturatedIcon
+                        visible: false // There's already color overlay
+                        anchors.fill: parent
+                        source: iconImageLoader
+                        desaturation: 0.8
+                    }
+                    ColorOverlay {
+                        anchors.fill: desaturatedIcon
+                        source: desaturatedIcon
+                        color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.9)
+                    }
+                }
+            }
+
+            RowLayout {
+                spacing: 3
+                anchors {
+                    top: iconImageLoader.bottom
+                    topMargin: 2
+                    horizontalCenter: parent.horizontalCenter
+                }
+                Repeater {
+                    model: Math.min(appToplevel.toplevels.length, 3)
+                    delegate: Rectangle {
+                        required property int index
+                        radius: Appearance.rounding.full
+                        implicitWidth: (appToplevel.toplevels.length <= 3) ? 
+                            root.countDotWidth : root.countDotHeight // Circles when too many
+                        implicitHeight: root.countDotHeight
+                        color: appIsActive ? Appearance.colors.colPrimary : ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.4)
+                    }
+                }
+            }
+        }
+    }
+}

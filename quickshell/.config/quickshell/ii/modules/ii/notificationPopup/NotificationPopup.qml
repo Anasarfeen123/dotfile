@@ -1,0 +1,67 @@
+import qs
+import qs.modules.common
+import qs.modules.common.widgets
+import qs.services
+import QtQuick
+import QtQuick.Controls
+import Quickshell
+import Quickshell.Wayland
+import Quickshell.Hyprland
+
+Scope {
+    id: notificationPopup
+
+    GlobalShortcut {
+        name: "toggleDnd"
+        description: "Toggles Do Not Disturb mode"
+
+        onPressed: {
+            Notifications.silent = !Notifications.silent;
+        }
+    }
+
+    GlobalShortcut {
+        name: "clearAllNotifications"
+        description: "Clears all notifications"
+
+        onPressed: {
+            Notifications.discardAllNotifications()
+        }
+    }
+
+    PanelWindow {
+        id: root
+        visible: (Notifications.popupList.length > 0) && !GlobalStates.screenLocked
+        screen: Quickshell.screens.find(s => Config.options.notifications.forceMonitor.enable ? s.name === Config.options.notifications.forceMonitor.name : s.name === Hyprland.focusedMonitor?.name) ?? null
+
+        WlrLayershell.namespace: "quickshell:notificationPopup"
+        WlrLayershell.layer: WlrLayer.Overlay
+        exclusiveZone: 0
+
+        anchors {
+            top: true
+            right: true
+            bottom: true
+        }
+
+        mask: Region {
+            item: listview.contentItem
+        }
+
+        color: "transparent"
+        implicitWidth: Appearance.sizes.notificationPopupWidth
+
+        NotificationListView {
+            id: listview
+            anchors {
+                top: parent.top
+                bottom: parent.bottom
+                right: parent.right
+                rightMargin: 16
+                topMargin: Appearance.sizes.baseBarHeight + 12
+            }
+            implicitWidth: parent.width - Appearance.sizes.elevationMargin * 2
+            popup: true
+        }
+    }
+}
