@@ -19,6 +19,10 @@ Scope { // Scope
             "name": Translation.tr("Keybinds")
         },
         {
+            "icon": "function",
+            "name": Translation.tr("Reference")
+        },
+        {
             "icon": "experiment",
             "name": Translation.tr("Elements")
         },
@@ -171,6 +175,7 @@ Scope { // Scope
                         }
 
                         CheatsheetKeybinds {}
+                        CheatsheetReference {}
                         CheatsheetPeriodicTable {}
                     }
                 }
