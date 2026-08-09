@@ -118,14 +118,19 @@ Scope {
                 }
                 spacing: -8
 
-                // A light fade on top of the height-reveal just softens the
-                // unmasking edge; it's not the primary motion cue here.
+                // Deliberately much quicker than the height reveal below
+                // (120ms vs 400ms): opacity settling fast means the growing
+                // height is the only thing still visibly happening for most
+                // of the transition, instead of the two racing each other
+                // and the fade reading as the dominant cue — confirmed by
+                // screenshotting this at 150ms/300ms/700ms: the height
+                // genuinely was still growing well after opacity had
+                // already visually settled.
                 opacity: panelWindow.wantsOpen ? 1 : 0
                 Behavior on opacity {
                     NumberAnimation {
-                        duration: panelWindow.wantsOpen ? Appearance.animation.elementMoveEnter.duration : Appearance.animation.elementMoveExit.duration
-                        easing.type: Easing.BezierSpline
-                        easing.bezierCurve: panelWindow.wantsOpen ? Appearance.animationCurves.emphasizedDecel : Appearance.animationCurves.emphasizedAccel
+                        duration: 120
+                        easing.type: Easing.OutQuad
                     }
                 }
 
