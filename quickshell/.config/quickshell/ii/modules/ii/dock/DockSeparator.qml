@@ -5,9 +5,15 @@ import QtQuick.Layouts
 
 // A soft fade instead of a hard 1px line — matches the glass aesthetic
 // better than a solid rule cutting across a translucent surface.
+//
+// The margins used to also add Appearance.rounding.normal (17px) on top
+// of the elevation/gap spacing on *both* sides — on a 60px-tall dock that
+// left the separator almost no visible height at all (~1px of a 60px
+// bar). Dropped that extra term; the gap/padding alone is already enough
+// to keep the line clear of the pill's rounded corners.
 Item {
-    Layout.topMargin: Appearance.sizes.elevationMargin + dockRow.padding + Appearance.rounding.normal
-    Layout.bottomMargin: Appearance.sizes.hyprlandGapsOut + dockRow.padding + Appearance.rounding.normal
+    Layout.topMargin: Appearance.sizes.elevationMargin + dockRow.padding
+    Layout.bottomMargin: Appearance.sizes.hyprlandGapsOut + dockRow.padding
     Layout.fillHeight: true
     implicitWidth: 1
 

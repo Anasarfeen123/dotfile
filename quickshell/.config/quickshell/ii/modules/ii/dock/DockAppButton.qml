@@ -8,6 +8,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
+import Quickshell.Wayland
+import Quickshell.Hyprland
 
 DockButton {
     id: root
@@ -106,12 +108,16 @@ DockButton {
         }
     }
 
+    // Was margin(10) + padding(5) + rounding.normal(17) = 32px on *each*
+    // side — 64px total on a button whose own height is ~60px, so this
+    // separator (between pinned and running apps in the list) had
+    // negative effective height and was never actually visible.
     Loader {
         active: isSeparator
         anchors {
             fill: parent
-            topMargin: dockVisualBackground.margin + dockRow.padding + Appearance.rounding.normal
-            bottomMargin: dockVisualBackground.margin + dockRow.padding + Appearance.rounding.normal
+            topMargin: dockVisualBackground.margin + dockRow.padding
+            bottomMargin: dockVisualBackground.margin + dockRow.padding
         }
         sourceComponent: DockSeparator {}
     }
@@ -156,18 +162,45 @@ DockButton {
     // Was an instant, unlabeled pin/unpin toggle on right-click — you had
     // to already know that gesture existed. A real menu instead, matching
     // what right-clicking a dock icon does everywhere else.
+    //
+    // This is a PopupWindow (its own Wayland surface, anchored to this
+    // button), not a QtQuick.Controls.Popup — a QQC2 Popup is confined to
+    // the *dock's own* layer-shell surface, which is exactly as tall as
+    // the dock bar itself, so a menu positioned above the button (negative
+    // y) was being silently clipped out of existence: the surface simply
+    // didn't extend there. This is the same pattern DockApps.qml's window
+    // preview popup already uses successfully for the same reason.
     altAction: () => {
-        if (!root.isSeparator) contextMenu.open();
+        if (!root.isSeparator) contextMenu.menuOpen = !contextMenu.menuOpen;
     }
 
-    Popup {
+    PopupWindow {
         id: contextMenu
-        y: -implicitHeight - 8
-        x: (root.width - width) / 2
-        modal: false
-        focus: true
-        closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
-        padding: 6
+        property bool menuOpen: false
+        visible: menuOpen
+        color: "transparent"
+
+        anchor {
+            item: root
+            edges: Edges.Top
+            gravity: Edges.Top
+            adjustment: PopupAdjustment.None
+            margins.bottom: 8
+        }
+
+        implicitWidth: menuBackground.implicitWidth
+        implicitHeight: menuBackground.implicitHeight
+
+        // Own isolated focus grab (not the shared GlobalFocusGrab
+        // singleton — that broadcasts one "dismissed" signal to every
+        // dismissable window at once, which would risk this menu closing
+        // the sidebar or overview too if either happened to be open).
+        HyprlandFocusGrab {
+            id: focusGrab
+            windows: [contextMenu]
+            active: contextMenu.menuOpen
+            onCleared: contextMenu.menuOpen = false
+        }
 
         readonly property var actions: [
             {
@@ -193,43 +226,51 @@ DockButton {
             },
         ]
 
-        background: Rectangle {
+        StyledRectangularShadow {
+            target: menuBackground
+        }
+        Rectangle {
+            id: menuBackground
             color: Appearance.m3colors.m3surfaceContainer
             radius: Appearance.rounding.normal
             border.width: 1
             border.color: Appearance.colors.colLayer0Border
-        }
+            implicitWidth: menuColumn.implicitWidth + 12
+            implicitHeight: menuColumn.implicitHeight + 12
 
-        contentItem: ColumnLayout {
-            spacing: 2
-            implicitWidth: 190
+            ColumnLayout {
+                id: menuColumn
+                anchors.centerIn: parent
+                spacing: 2
+                implicitWidth: 190
 
-            Repeater {
-                model: contextMenu.actions
-                delegate: RippleButton {
-                    id: menuRow
-                    required property var modelData
-                    visible: modelData.visible
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: visible ? 36 : 0
-                    buttonRadius: Appearance.rounding.small
-                    colBackground: "transparent"
-                    onClicked: {
-                        contextMenu.close();
-                        modelData.trigger();
-                    }
-                    leftPadding: 8
-                    rightPadding: 8
-                    contentItem: RowLayout {
-                        spacing: 8
-                        MaterialSymbol {
-                            text: menuRow.modelData.icon
-                            iconSize: Appearance.font.pixelSize.normal
-                            color: menuRow.modelData.danger ? Appearance.colors.colError : Appearance.colors.colOnLayer0
+                Repeater {
+                    model: contextMenu.actions
+                    delegate: RippleButton {
+                        id: menuRow
+                        required property var modelData
+                        visible: modelData.visible
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: visible ? 36 : 0
+                        buttonRadius: Appearance.rounding.small
+                        colBackground: "transparent"
+                        onClicked: {
+                            contextMenu.menuOpen = false;
+                            modelData.trigger();
                         }
-                        StyledText {
-                            text: menuRow.modelData.text
-                            color: menuRow.modelData.danger ? Appearance.colors.colError : Appearance.colors.colOnLayer0
+                        leftPadding: 8
+                        rightPadding: 8
+                        contentItem: RowLayout {
+                            spacing: 8
+                            MaterialSymbol {
+                                text: menuRow.modelData.icon
+                                iconSize: Appearance.font.pixelSize.normal
+                                color: menuRow.modelData.danger ? Appearance.colors.colError : Appearance.colors.colOnLayer0
+                            }
+                            StyledText {
+                                text: menuRow.modelData.text
+                                color: menuRow.modelData.danger ? Appearance.colors.colError : Appearance.colors.colOnLayer0
+                            }
                         }
                     }
                 }
