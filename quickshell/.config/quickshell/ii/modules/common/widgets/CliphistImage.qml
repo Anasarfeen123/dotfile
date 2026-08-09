@@ -44,8 +44,15 @@ Rectangle {
 
     color: Appearance.colors.colLayer1
     radius: Appearance.rounding.small
-    implicitHeight: imageHeight * scale
-    implicitWidth: imageWidth * scale
+    // Rounded to whole pixels — a fractional size here (e.g. 233.4px) means
+    // the OpacityMask layer below renders into an offscreen texture that
+    // doesn't line up with the physical pixel grid, so its bilinear
+    // sampling softens the whole image. Since the fraction depends on each
+    // image's own aspect ratio vs the available box, some thumbnails landed
+    // on a near-integer size (looked sharp) and others didn't (looked
+    // blurry) — hence it seeming to happen "randomly".
+    implicitHeight: Math.round(imageHeight * scale)
+    implicitWidth: Math.round(imageWidth * scale)
 
     Component.onCompleted: {
         decodeImageProcess.running = true;
@@ -86,8 +93,8 @@ Rectangle {
         antialiasing: true
         asynchronous: true
 
-        width: root.imageWidth * root.scale
-        height: root.imageHeight * root.scale
+        width: Math.round(root.imageWidth * root.scale)
+        height: Math.round(root.imageHeight * root.scale)
 
         // Was a hard pop the instant the async decode finished — fades in
         // instead now that it's actually ready to show.

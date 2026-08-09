@@ -248,7 +248,11 @@ RippleButton {
                     Layout.fillWidth: true
                     entry: root.cliphistRawString
                     maxWidth: contentColumn.width
-                    maxHeight: 140
+                    // Was 140 — full-desktop screenshots (1080px+ tall) got
+                    // squashed down by 7-8x into that, so any text/detail in
+                    // them was unavoidably mush no matter how the scaling
+                    // was done. Taller preview keeps more source detail.
+                    maxHeight: 220
                     blur: root.blurImage
                 }
             }
