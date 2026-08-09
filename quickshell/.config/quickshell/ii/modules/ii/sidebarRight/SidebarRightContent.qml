@@ -136,8 +136,83 @@ Item {
                 id: sidebarStack
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                currentIndex: sidebarTabBar.currentIndex
                 clip: true
+
+                // The tab bar's currentIndex is the source of truth, but the
+                // page swap itself happens on `internalIndex`, one beat
+                // later — tabSwitchAnim fades+slides the old page out,
+                // swaps it while invisible, then fades+slides the new one
+                // in, instead of the instant StackLayout snap.
+                property int internalIndex: sidebarTabBar.currentIndex
+                currentIndex: internalIndex
+
+                opacity: 1
+                transform: Translate {
+                    id: sidebarStackTranslate
+                    x: 0
+                }
+
+                Connections {
+                    target: sidebarTabBar
+                    function onCurrentIndexChanged() {
+                        tabSwitchAnim.direction = sidebarTabBar.currentIndex > sidebarStack.internalIndex ? 1 : -1;
+                        tabSwitchAnim.targetIndex = sidebarTabBar.currentIndex;
+                        tabSwitchAnim.restart();
+                    }
+                }
+
+                SequentialAnimation {
+                    id: tabSwitchAnim
+                    property int direction: 1
+                    property int targetIndex: 0
+
+                    ParallelAnimation {
+                        NumberAnimation {
+                            target: sidebarStack
+                            property: "opacity"
+                            to: 0
+                            duration: Appearance.animation.elementMoveFast.duration
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                        }
+                        NumberAnimation {
+                            target: sidebarStackTranslate
+                            property: "x"
+                            to: -18 * tabSwitchAnim.direction
+                            duration: Appearance.animation.elementMoveFast.duration
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                        }
+                    }
+                    PropertyAction {
+                        target: sidebarStack
+                        property: "internalIndex"
+                        value: tabSwitchAnim.targetIndex
+                    }
+                    PropertyAction {
+                        target: sidebarStackTranslate
+                        property: "x"
+                        value: 18 * tabSwitchAnim.direction
+                    }
+                    ParallelAnimation {
+                        NumberAnimation {
+                            target: sidebarStack
+                            property: "opacity"
+                            to: 1
+                            duration: Appearance.animation.elementMoveEnter.duration
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+                        }
+                        NumberAnimation {
+                            target: sidebarStackTranslate
+                            property: "x"
+                            to: 0
+                            duration: Appearance.animation.elementMoveEnter.duration
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+                        }
+                    }
+                }
 
                 Item { // Status page
                     id: statusPage
@@ -155,6 +230,24 @@ Item {
                             id: statusColumn
                             width: statusFlickable.width
                             spacing: sidebarPadding
+
+                            RowLayout { // Compact header, matching the other tab pages
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                MaterialSymbol {
+                                    text: "monitor_heart"
+                                    iconSize: 16
+                                    color: Appearance.colors.colPrimary
+                                }
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    text: Translation.tr("Status")
+                                    font.pixelSize: Appearance.font.pixelSize.small
+                                    font.weight: Font.DemiBold
+                                    color: Appearance.colors.colOnLayer1
+                                }
+                            }
 
                             Loader {
                                 id: slidersLoader

@@ -30,24 +30,37 @@ Item {
     Layout.alignment: Qt.AlignVCenter
     opacity: collapsed ? 0 : 1
 
+    // Snappy/decisive on the way out, a touch slower and springier coming
+    // back — same motion tokens used everywhere else, just applied
+    // asymmetrically so the collapse feels intentional rather than a
+    // generic fade both ways.
     Behavior on Layout.preferredWidth {
         NumberAnimation {
-            duration: Appearance.animation.elementMove.duration
-            easing.type: Appearance.animation.elementMove.type
-            easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+            duration: root.collapsed ? Appearance.animation.elementMoveExit.duration : Appearance.animation.elementMove.duration
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: root.collapsed ? Appearance.animation.elementMoveExit.bezierCurve : Appearance.animation.elementMove.bezierCurve
         }
     }
     Behavior on opacity {
         NumberAnimation {
-            duration: Appearance.animation.elementMoveFast.duration
-            easing.type: Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            duration: root.collapsed ? Appearance.animation.elementMoveExit.duration : Appearance.animation.elementMove.duration
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: root.collapsed ? Appearance.animation.elementMoveExit.bezierCurve : Appearance.animation.elementMove.bezierCurve
         }
     }
 
     function barX(i) {
         if (i < root.half) return root.center - (root.half - i) * root.step;
         return root.center + (i - root.half) * root.step + root.barSpacing;
+    }
+
+    // Distance of bar `i` from the visual center line, used to stagger the
+    // per-bar collapse below: closing sweeps outside-in (edges fold first,
+    // like a curtain), opening blooms center-out.
+    function staggerDelay(i) {
+        const dist = Math.abs(i - (root.half - 0.5));       // 0.5 (center) .. half-0.5 (edge)
+        const maxDist = root.half - 0.5;
+        return (root.collapsed ? dist : (maxDist - dist)) * 9;
     }
 
     function colorFor(value, barIndex) {
@@ -80,11 +93,27 @@ Item {
                 y: barsHost.height - height
                 height: Math.max(2, (value / root.maxRange) * barsHost.height)
 
+                // Collapse is done via `scale`, kept fully separate from the
+                // live audio-driven `height` above, so folding away for the
+                // resources widget never touches the snappy per-frame bounce.
+                transformOrigin: Item.Bottom
+                scale: root.collapsed ? 0.15 : 1
+
                 Behavior on height {
                     NumberAnimation { duration: 60; easing.type: Easing.OutQuad }
                 }
                 Behavior on color {
                     ColorAnimation { duration: 60 }
+                }
+                Behavior on scale {
+                    SequentialAnimation {
+                        PauseAnimation { duration: root.staggerDelay(index) }
+                        NumberAnimation {
+                            duration: root.collapsed ? 110 : 200
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: root.collapsed ? Appearance.animation.elementMoveExit.bezierCurve : Appearance.animation.elementMove.bezierCurve
+                        }
+                    }
                 }
             }
         }

@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import qs.modules.common
 import qs.modules.common.models
+import qs.modules.common.functions
 
 TabBar {
     id: root
@@ -28,6 +29,38 @@ TabBar {
                 else if (event.angleDelta.y > 0) root.decrementCurrentIndex();
             }
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        }
+
+        // Soft filled pill riding behind the active tab. Shares the same
+        // currentTabX/currentTabWidth target as the underline below, but
+        // moves on the slower/softer spatial curve while the underline uses
+        // the fast, punchier one — the underline snaps into place first and
+        // the glow catches up a beat behind it, instead of both just
+        // teleporting together.
+        Rectangle {
+            id: activePill
+            z: 9998
+            anchors.verticalCenter: parent.verticalCenter
+            radius: Appearance.rounding.normal
+            color: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.12)
+            height: parent.height - 12
+            x: root.currentTabX + root.indicatorPadding
+            width: Math.max(0, root.currentTabWidth - root.indicatorPadding * 2)
+
+            Behavior on x {
+                NumberAnimation {
+                    duration: Appearance.animationCurves.expressiveDefaultSpatialDuration
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Appearance.animationCurves.expressiveDefaultSpatial
+                }
+            }
+            Behavior on width {
+                NumberAnimation {
+                    duration: Appearance.animationCurves.expressiveDefaultSpatialDuration
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Appearance.animationCurves.expressiveDefaultSpatial
+                }
+            }
         }
 
         Rectangle {
