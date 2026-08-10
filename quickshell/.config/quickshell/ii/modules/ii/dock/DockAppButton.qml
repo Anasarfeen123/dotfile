@@ -144,6 +144,22 @@ DockButton {
                     appListRoot.buttonHovered = false
                 }
             }
+
+            // New: scroll over an icon with multiple windows to step
+            // through them one at a time, without needing to click
+            // repeatedly (click already cycles, but that also
+            // launches/refocuses on every click — scroll is a quieter way
+            // to just page through).
+            onWheel: wheel => {
+                if (appToplevel.toplevels.length <= 1) {
+                    wheel.accepted = false;
+                    return;
+                }
+                const dir = wheel.angleDelta.y > 0 ? -1 : 1;
+                lastFocused = ((lastFocused + dir) % appToplevel.toplevels.length + appToplevel.toplevels.length) % appToplevel.toplevels.length;
+                appToplevel.toplevels[lastFocused].activate();
+                wheel.accepted = true;
+            }
         }
     }
 
@@ -241,8 +257,9 @@ DockButton {
             // the same UI.
             color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.72)
             radius: Appearance.rounding.normal
-            border.width: 1
-            border.color: Appearance.colors.colLayer0Border
+            // Dropped the hard 1px border — a soft drop shadow alone reads
+            // as a fluid floating glass surface; the border made it look
+            // like a stiff, separate boxed-in panel instead.
             implicitWidth: menuColumn.implicitWidth + 12
             implicitHeight: menuColumn.implicitHeight + 12
 
@@ -290,13 +307,25 @@ DockButton {
         active: !isSeparator
         sourceComponent: Item {
             anchors.centerIn: parent
+            // Was unsized, so `centerIn: parent` above centered a
+            // zero-height point rather than the actual icon+dots group —
+            // the icon ended up dead center while the running-indicator
+            // dots then extended further down from there, visually
+            // pushing everything up with too much empty space below. This
+            // sizes the wrapper to the icon's real height, plus room for
+            // the dots when any windows are open, so centering actually
+            // centers the whole group.
+            implicitWidth: root.iconSize
+            implicitHeight: root.iconSize + (appToplevel.toplevels.length > 0 ? 2 + root.countDotHeight : 0)
 
             // Material "state layer": a soft rounded tile fading in behind
             // the icon on hover, so icons have some visual weight of their
             // own beyond the scale-up — previously hover was *only* the
-            // magnify/lift, nothing sat under the icon itself.
+            // magnify/lift, nothing sat under the icon itself. Centered on
+            // the icon specifically (not this whole taller wrapper), so it
+            // doesn't drift downward when the dots row is present.
             Rectangle {
-                anchors.centerIn: parent
+                anchors.centerIn: iconImageLoader
                 width: root.iconSize + 20
                 height: root.iconSize + 20
                 radius: Appearance.rounding.normal
@@ -312,7 +341,7 @@ DockButton {
                 anchors {
                     left: parent.left
                     right: parent.right
-                    verticalCenter: parent.verticalCenter
+                    top: parent.top
                 }
                 active: !root.isSeparator
                 sourceComponent: IconImage {

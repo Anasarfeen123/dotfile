@@ -68,9 +68,6 @@ Item {
         return (Config.options.overview.orderBottomUp ? Config.options.overview.rows - ri - 1 : ri) * Config.options.overview.columns + (Config.options.overview.orderRightLeft ? Config.options.overview.columns - ci - 1 : ci) + 1
     }
 
-    StyledRectangularShadow {
-        target: overviewBackground
-    }
     Rectangle { // Background
         id: overviewBackground
         property real padding: 10
@@ -84,8 +81,11 @@ Item {
         // was riding the global transparency token and reading flatter
         // than the rest of the overview.
         color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.72)
-        border.width: 1
-        border.color: Appearance.colors.colLayer0Border
+        // This is one pane of the same floating capsule SearchWidget sits
+        // in above (Overview.qml's revealClip owns the outer shape + one
+        // shadow now) — its own border and drop shadow made it read as a
+        // second, separate card stacked under the search bar instead of
+        // one continuous surface.
 
         Column { // Workspaces
             id: workspaceColumnLayout

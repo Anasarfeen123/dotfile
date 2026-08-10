@@ -99,11 +99,27 @@ Scope {
         // own rounding) as it widens past the collapsed size; see
         // islandRadius below. No opacity animation anywhere: the content
         // is simply revealed as the clip grows, never faded.
+        StyledRectangularShadow {
+            // One shadow for the whole capsule now, instead of each inner
+            // pane (search bar, workspace grid) casting its own — see
+            // SearchWidget.qml/OverviewWidget.qml.
+            target: revealClip
+        }
+
         Item {
             id: revealClip
             anchors {
                 horizontalCenter: parent.horizontalCenter
                 top: parent.top
+                // Was unset, i.e. 0 — the panel's top (and the collapsed
+                // pill's entire 32px) sat right behind the top bar, fully
+                // hidden by it. It only became visible once the grow
+                // animation had already pushed it taller than the bar, so
+                // it looked like it just materialized mid-animation rather
+                // than actually emerging from the bar. Starting flush with
+                // the bar's bottom edge means the collapsed pill is visible
+                // from frame one, growing downward from the bar itself.
+                topMargin: Appearance.sizes.barHeight
             }
 
             readonly property real collapsedWidth: 96

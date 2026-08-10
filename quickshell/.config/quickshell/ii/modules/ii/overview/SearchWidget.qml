@@ -105,9 +105,6 @@ Item { // Wrapper
         }
     }
 
-    StyledRectangularShadow {
-        target: searchWidgetContent
-    }
     Rectangle { // Background
         id: searchWidgetContent
         anchors {
@@ -130,8 +127,11 @@ Item { // Wrapper
             animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
         }
 
-        border.width: 1
-        border.color: Appearance.colors.colLayer0Border
+        // This and OverviewWidget below it are two panes of one floating
+        // capsule (Overview.qml's revealClip owns the outer shape + shadow
+        // now), not separate standalone cards — each having its own border
+        // and drop shadow made them read as two stacked boxes with a
+        // visible seam between them instead of one fluid surface.
 
         ColumnLayout {
             id: columnLayout

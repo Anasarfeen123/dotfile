@@ -124,13 +124,20 @@ Scope { // Scope
                             anchors.fill: parent
                             anchors.topMargin: Appearance.sizes.elevationMargin
                             anchors.bottomMargin: dockRoot.floatGap
-                            // Same fixed glass recipe as the sidebars
-                            // (colLayer0Base @ 0.72 + hairline border), not
-                            // the generic colLayer0 token — that one rides
-                            // the global transparency setting and reads
-                            // noticeably flatter/more opaque than the panels
-                            // it sits next to.
-                            color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.72)
+                            // A soft vertical gradient instead of a flat
+                            // fill — real glass/acrylic isn't a single flat
+                            // tint, it reads lighter/more see-through near
+                            // the top and a little denser toward the
+                            // bottom. Also more transparent overall now
+                            // (was a flat 0.72) for a genuinely glassy feel
+                            // against the compositor blur behind it, rather
+                            // than a solid tinted panel that happens to
+                            // have blur turned on.
+                            gradient: Gradient {
+                                orientation: Gradient.Vertical
+                                GradientStop { position: 0.0; color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.56) }
+                                GradientStop { position: 1.0; color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.7) }
+                            }
                             border.width: 1
                             border.color: Appearance.colors.colLayer0Border
                             // A true capsule (fully rounded ends) instead of
@@ -157,6 +164,26 @@ Scope { // Scope
                                     orientation: Gradient.Horizontal
                                     GradientStop { position: 0.0; color: ColorUtils.transparentize(Appearance.colors.colOnLayer0, 1) }
                                     GradientStop { position: 0.5; color: ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.82) }
+                                    GradientStop { position: 1.0; color: ColorUtils.transparentize(Appearance.colors.colOnLayer0, 1) }
+                                }
+                            }
+
+                            // A second, fainter highlight along the bottom
+                            // edge — real glass/acrylic catches light on
+                            // both edges of its curved profile, not just
+                            // the top. Kept subtler than the top one so it
+                            // doesn't compete with it.
+                            Rectangle {
+                                anchors {
+                                    bottom: parent.bottom
+                                    left: parent.left
+                                    right: parent.right
+                                }
+                                height: 1
+                                gradient: Gradient {
+                                    orientation: Gradient.Horizontal
+                                    GradientStop { position: 0.0; color: ColorUtils.transparentize(Appearance.colors.colOnLayer0, 1) }
+                                    GradientStop { position: 0.5; color: ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.92) }
                                     GradientStop { position: 1.0; color: ColorUtils.transparentize(Appearance.colors.colOnLayer0, 1) }
                                 }
                             }

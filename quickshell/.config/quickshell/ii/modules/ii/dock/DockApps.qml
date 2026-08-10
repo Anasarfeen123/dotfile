@@ -145,7 +145,10 @@ Item {
                     animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
                 }
                 clip: true
-                color: Appearance.m3colors.m3surfaceContainer
+                // Was a flat M3 surfaceContainer — matches the same glass
+                // recipe as the dock itself now instead of looking like a
+                // different, opaque popup floating above it.
+                color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.72)
                 radius: Appearance.rounding.normal
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: Appearance.sizes.elevationMargin
