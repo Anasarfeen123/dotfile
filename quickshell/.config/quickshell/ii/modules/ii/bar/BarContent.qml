@@ -116,17 +116,18 @@ Item { // Bar content region
 
             Resources {
                 id: resourcesWidget
+                visible: !GlobalStates.batterySaverEnabled
                 alwaysShowAllResources: root.useShortenedForm === 2
                 Layout.fillWidth: root.useShortenedForm === 2
             }
 
             Media {
-                visible: root.useShortenedForm < 2
+                visible: root.useShortenedForm < 2 && !GlobalStates.batterySaverEnabled
                 Layout.fillWidth: true
             }
 
             CavaVisualizer {
-                visible: root.useShortenedForm < 2 && Config.options.bar.showVisualizer
+                visible: root.useShortenedForm < 2 && Config.options.bar.showVisualizer && !GlobalStates.batterySaverEnabled
                 Layout.alignment: Qt.AlignVCenter
                 collapsed: resourcesWidget.containsMouse
             }

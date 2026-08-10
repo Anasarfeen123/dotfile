@@ -32,15 +32,6 @@ if status is-interactive
     alias .... 'cd ../../..'
     alias -- - 'cd -'
 
-    # Listing with eza
-    if test "$TERM" != "linux"
-        alias ls 'eza --icons'
-        alias ll 'eza -l --icons --git'
-        alias la 'eza -la --icons --git'
-        alias lt 'eza -T --icons'
-        alias l1 'eza -1 --icons'
-    end
-
     # Kitty SSH
     if test "$TERM" = "xterm-kitty"
         alias ssh 'kitten ssh'

@@ -111,7 +111,7 @@ GPage {
                             RowLayout {
                                 spacing: 3
                                 GKeyCap { key: "Ctrl" }
-                                GKeyCap { key: Config.options.cheatsheet.superKey ?? "⌘" }
+                                GKeyCap { key: Config.options.cheatsheet.superKey || "" }
                                 GText { Layout.alignment: Qt.AlignVCenter; text: "+" }
                                 GKeyCap { key: "T" }
                             }

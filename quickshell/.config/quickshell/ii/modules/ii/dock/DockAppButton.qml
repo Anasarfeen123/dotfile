@@ -16,10 +16,8 @@ DockButton {
     property var appToplevel
     property var appListRoot
     property int lastFocused: -1
-    // Was 35 — a floating pill dock with real padding around it reads
-    // better with more substantial icons, macOS-dock style, rather than
-    // small icons in a flush taskbar strip.
-    property real iconSize: 40
+    // Now user-adjustable — Settings > Interface > Dock > Icon size.
+    property real iconSize: Config.options.dock.iconSize
     property real countDotWidth: 10
     property real countDotHeight: 4
     property bool appIsActive: appToplevel.toplevels.find(t => (t.activated == true)) !== undefined
@@ -51,7 +49,7 @@ DockButton {
     // The classic macOS dock trick: icons near the pointer grow a little
     // too, tapering off with distance, so the hovered icon doesn't look
     // like it's growing in isolation. Purely additive on top of the
-    // existing isHovered scale below — the hovered button's own 1.30 is
+    // existing isHovered scale below — the hovered button's own scale is
     // untouched, this only ever affects its neighbors.
     property real neighborBoost: {
         if (isHovered || isSeparator) return 0;
@@ -61,7 +59,7 @@ DockButton {
         const dist = Math.abs((root.x + root.width / 2) - px);
         if (dist >= maxDist) return 0;
         const t = 1 - dist / maxDist;
-        return 0.18 * t * t;
+        return 0.14 * t * t;
     }
 
     // Was Easing.OutBack with a manual overshoot — the only place in the
@@ -81,7 +79,12 @@ DockButton {
     // live on contentItem (the actual rendered visuals) below instead, so
     // root's own bounds — and therefore everyone's hit-test region — stay
     // fixed regardless of how big anything is drawn.
-    property real iconScale: (isHovered ? 1.30 : 1.0) + neighborBoost
+    // Was 1.30 — with the icon now framed inside a fixed-size canvas tile
+    // (see contentItem below), too aggressive a scale-up visually pushed
+    // the glow/edge of that tile past the dock's own top edge when
+    // combined with the hover lift. 1.22 keeps the magnify effect clearly
+    // readable while comfortably fitting within the dock's height.
+    property real iconScale: (isHovered ? 1.22 : 1.0) + neighborBoost
 
     SequentialAnimation {
         id: launchBounceAnim
@@ -337,76 +340,123 @@ DockButton {
         }
 
         sourceComponent: Item {
-            anchors.centerIn: parent
-            // Was `implicitWidth`/`implicitHeight` — those are only a
-            // *hint* the Loader is free to override, and since the Loader
-            // above now has an explicit width/height of its own, Loader's
-            // default behavior stretches an unsized child to fill it
-            // completely. That silently expanded this wrapper to the
-            // *button's* full height regardless of what implicitHeight
-            // said, which made `centerIn: parent` a no-op (the wrapper was
-            // already the same size as its parent) and left the icon —
-            // anchored to this wrapper's own top — sitting at the literal
-            // top of the button instead of centered. Real width/height
-            // can't be overridden that way, so the sizing actually holds
-            // and centerIn works as intended.
-            width: root.iconSize
-            height: root.iconSize + (appToplevel.toplevels.length > 0 ? 2 + root.countDotHeight : 0)
-
-            // Material "state layer": a soft rounded tile fading in behind
-            // the icon on hover, so icons have some visual weight of their
-            // own beyond the scale-up — previously hover was *only* the
-            // magnify/lift, nothing sat under the icon itself. Centered on
-            // the icon specifically (not this whole taller wrapper), so it
-            // doesn't drift downward when the dots row is present.
-            Rectangle {
-                anchors.centerIn: iconImageLoader
-                width: root.iconSize + 20
-                height: root.iconSize + 20
-                radius: Appearance.rounding.normal
-                color: Appearance.colors.colLayer1Hover
-                opacity: root.isHovered ? 1 : 0
-                Behavior on opacity {
-                    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
-                }
+            id: iconGroup
+            // Anchored toward the bottom with a modest margin rather than
+            // dead-centered — a real dock's icons sit grounded near its
+            // floor, not floating in the exact middle, and this leaves
+            // more headroom *above* for the hover magnify + lift to grow
+            // into without ever nearing the pill's own top edge.
+            anchors {
+                horizontalCenter: parent.horizontalCenter
+                bottom: parent.bottom
+                // -21 confirmed as the preferred value through live tuning.
+                bottomMargin: -21
             }
+            // canvasSize is the one source of truth for both the tile's
+            // own size and this wrapper's layout budget below — every
+            // other dimension here is derived from it, instead of the
+            // tile and the icon each carrying their own independent size
+            // that has to be kept in sync by hand.
+            readonly property real canvasSize: root.iconSize + 16
+            // Real width/height, not implicitWidth/implicitHeight — those
+            // are only a *hint* the Loader is free to override, and the
+            // Loader above has an explicit size of its own, so an unsized
+            // child gets silently stretched to fill it (Loader's default
+            // behavior), which would make this centerIn a no-op.
+            width: iconGroup.canvasSize
+            height: iconGroup.canvasSize + (appToplevel.toplevels.length > 0 ? 2 + root.countDotHeight : 0)
 
-            Loader {
-                id: iconImageLoader
+            // Every icon sits on its own permanent rounded-square "canvas"
+            // — a consistent tile behind every icon regardless of the
+            // actual icon's shape/transparency, macOS-dock style, rather
+            // than raw icons of inconsistent visual weight floating with
+            // nothing framing them. Anchored to this wrapper's own top
+            // (not centered on the icon inside it) so it's the canvas —
+            // the actual dominant visible shape — that's correctly
+            // positioned within the wrapper's layout budget; the icon is
+            // just centered inside *it*, one level down, where a size
+            // mismatch between the two can't throw off the outer
+            // centering.
+            Rectangle {
+                id: iconCanvas
                 anchors {
-                    left: parent.left
-                    right: parent.right
                     top: parent.top
+                    horizontalCenter: parent.horizontalCenter
                 }
-                active: !root.isSeparator
-                sourceComponent: IconImage {
-                    source: Quickshell.iconPath(AppSearch.guessIcon(appToplevel.appId), "image-missing")
-                    implicitSize: root.iconSize
-                    // No .desktop entry matched this appId — dim the icon so
-                    // a dead pin is visibly distinguishable rather than
-                    // looking identical to a working one.
-                    opacity: root.unresolvable ? 0.5 : 1
+                width: iconGroup.canvasSize
+                height: iconGroup.canvasSize
+                radius: Appearance.rounding.normal
+                color: ColorUtils.applyAlpha(Appearance.colors.colLayer1, 0.4)
+                border.width: 1
+                border.color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Border, 0.6)
+                Behavior on color {
+                    animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+                }
+
+                Loader {
+                    id: iconImageLoader
+                    anchors.centerIn: parent
+                    active: !root.isSeparator
+                    sourceComponent: IconImage {
+                        source: Quickshell.iconPath(AppSearch.guessIcon(appToplevel.appId), "image-missing")
+                        // A little smaller than the canvas around it, same
+                        // margin macOS gives its own dock icons inside
+                        // their tile, so nothing visually touches the
+                        // canvas' own rounded edge.
+                        implicitSize: root.iconSize - 4
+                        // No .desktop entry matched this appId — dim the
+                        // icon so a dead pin is visibly distinguishable
+                        // rather than looking identical to a working one.
+                        opacity: root.unresolvable ? 0.5 : 1
+                        Behavior on opacity {
+                            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                        }
+                    }
+                }
+
+                Loader {
+                    active: Config.options.dock.monochromeIcons
+                    anchors.fill: iconImageLoader
+                    sourceComponent: Item {
+                        Desaturate {
+                            id: desaturatedIcon
+                            visible: true
+                            anchors.fill: parent
+                            source: iconImageLoader
+                            desaturation: 1.0
+                        }
+                        ColorOverlay {
+                            anchors.fill: desaturatedIcon
+                            source: desaturatedIcon
+                            color: Appearance.colors.colOnLayer1
+                            opacity: 0.9
+                        }
+                    }
+                }
+
+                // A colored glow instead of just count-dots when this is
+                // the focused app — glanceable at rest, not only on hover.
+                Rectangle {
+                    anchors.fill: parent
+                    radius: parent.radius
+                    color: "transparent"
+                    border.width: 1.5
+                    border.color: Appearance.colors.colPrimary
+                    opacity: root.appIsActive ? 0.9 : 0
                     Behavior on opacity {
                         animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
                     }
                 }
-            }
 
-            Loader {
-                active: Config.options.dock.monochromeIcons
-                anchors.fill: iconImageLoader
-                sourceComponent: Item {
-                    Desaturate {
-                        id: desaturatedIcon
-                        visible: false // There's already color overlay
-                        anchors.fill: parent
-                        source: iconImageLoader
-                        desaturation: 0.8
-                    }
-                    ColorOverlay {
-                        anchors.fill: desaturatedIcon
-                        source: desaturatedIcon
-                        color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.9)
+                // The hover state layer — brighter overlay on top of the
+                // permanent canvas, not a separate tile of its own.
+                Rectangle {
+                    anchors.fill: parent
+                    radius: parent.radius
+                    color: Appearance.colors.colLayer1Hover
+                    opacity: root.isHovered ? 1 : 0
+                    Behavior on opacity {
+                        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
                     }
                 }
             }
@@ -414,7 +464,7 @@ DockButton {
             RowLayout {
                 spacing: 3
                 anchors {
-                    top: iconImageLoader.bottom
+                    top: iconCanvas.bottom
                     topMargin: 2
                     horizontalCenter: parent.horizontalCenter
                 }
@@ -423,7 +473,7 @@ DockButton {
                     delegate: Rectangle {
                         required property int index
                         radius: Appearance.rounding.full
-                        implicitWidth: (appToplevel.toplevels.length <= 3) ? 
+                        implicitWidth: (appToplevel.toplevels.length <= 3) ?
                             root.countDotWidth : root.countDotHeight // Circles when too many
                         implicitHeight: root.countDotHeight
                         color: appIsActive ? Appearance.colors.colPrimary : ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.4)

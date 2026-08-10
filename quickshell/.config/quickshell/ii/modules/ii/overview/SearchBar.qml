@@ -10,13 +10,24 @@ import qs.modules.common.functions
 
 RowLayout {
     id: root
-    spacing: 6
+    spacing: 8
     property bool animateWidth: false
     property alias searchInput: searchInput
     property string searchingText
 
     function forceFocus() {
         searchInput.forceActiveFocus();
+    }
+
+    function activatePrefix(prefix) {
+        searchInput.forceActiveFocus();
+        if (root.searchingText.startsWith(prefix)) {
+            searchInput.selectAll();
+            return;
+        }
+        searchInput.text = prefix;
+        searchInput.cursorPosition = searchInput.text.length;
+        LauncherSearch.query = searchInput.text;
     }
 
     enum SearchPrefixType { Action, App, Clipboard, Emojis, Math, ShellCommand, WebSearch, Windows, Weather, File, DefaultSearch }
@@ -39,6 +50,8 @@ RowLayout {
         id: searchIcon
         Layout.alignment: Qt.AlignVCenter
         iconSize: Appearance.font.pixelSize.huge
+        color: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.42)
+        colSymbol: Appearance.colors.colOnSecondaryContainer
         shape: switch(root.searchPrefixType) {
             case SearchBar.SearchPrefixType.Action: return MaterialShape.Shape.Pill;
             case SearchBar.SearchPrefixType.App: return MaterialShape.Shape.Clover4Leaf;
@@ -75,7 +88,10 @@ RowLayout {
         focus: GlobalStates.overviewOpen
         font.pixelSize: Appearance.font.pixelSize.small
         placeholderText: Translation.tr("Search, calculate or run")
-        implicitWidth: root.searchingText == "" ? Appearance.sizes.searchWidthCollapsed : Appearance.sizes.searchWidth
+        implicitWidth: root.searchingText == "" ? Math.max(Appearance.sizes.searchWidthCollapsed, 280) : Math.max(Appearance.sizes.searchWidth, 430)
+        color: Appearance.colors.colOnLayer2
+        placeholderTextColor: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.62)
+        colBackground: ColorUtils.applyAlpha(Appearance.colors.colLayer1Base, 0.46)
 
         Behavior on implicitWidth {
             id: searchWidthBehavior
@@ -113,6 +129,56 @@ RowLayout {
     IconToolbarButton {
         Layout.topMargin: 4
         Layout.bottomMargin: 4
+        Layout.leftMargin: 2
+        toggled: root.searchingText.startsWith(Config.options.search.prefix.clipboard)
+        colText: toggled ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer2
+        onClicked: root.activatePrefix(Config.options.search.prefix.clipboard)
+        text: "content_paste_search"
+        StyledToolTip {
+            text: Translation.tr("Clipboard")
+        }
+    }
+
+    IconToolbarButton {
+        Layout.topMargin: 4
+        Layout.bottomMargin: 4
+        toggled: root.searchingText.startsWith(Config.options.search.prefix.emojis)
+        colText: toggled ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer2
+        onClicked: root.activatePrefix(Config.options.search.prefix.emojis)
+        text: "add_reaction"
+        StyledToolTip {
+            text: Translation.tr("Emojis")
+        }
+    }
+
+    IconToolbarButton {
+        Layout.topMargin: 4
+        Layout.bottomMargin: 4
+        toggled: root.searchingText.startsWith(Config.options.search.prefix.windows)
+        colText: toggled ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer2
+        onClicked: root.activatePrefix(Config.options.search.prefix.windows)
+        text: "window"
+        StyledToolTip {
+            text: Translation.tr("Windows")
+        }
+    }
+
+    IconToolbarButton {
+        Layout.topMargin: 4
+        Layout.bottomMargin: 4
+        toggled: root.searchingText.startsWith(Config.options.search.prefix.file)
+        colText: toggled ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer2
+        onClicked: root.activatePrefix(Config.options.search.prefix.file)
+        text: "description"
+        StyledToolTip {
+            text: Translation.tr("Files")
+        }
+    }
+
+    IconToolbarButton {
+        Layout.topMargin: 4
+        Layout.bottomMargin: 4
+        colText: Appearance.colors.colOnLayer2
         onClicked: {
             GlobalStates.overviewOpen = false;
             Quickshell.execDetached(["qs", "-p", Quickshell.shellPath(""), "ipc", "call", "region", "search"]);
@@ -127,8 +193,9 @@ RowLayout {
         id: songRecButton
         Layout.topMargin: 4
         Layout.bottomMargin: 4
-        Layout.rightMargin: 4
+        Layout.rightMargin: 8
         toggled: SongRec.running
+        colText: toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
         onClicked: SongRec.toggleRunning()
         text: "music_cast"
 
@@ -136,7 +203,6 @@ RowLayout {
             text: Translation.tr("Recognize music")
         }
 
-        colText: toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurfaceVariant
         background: MaterialShape {
             RotationAnimation on rotation {
                 running: songRecButton.toggled

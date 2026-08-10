@@ -26,6 +26,10 @@ RippleButton {
     middleClickAction: () => {
         Notifications.silent = !Notifications.silent;
     }
+    altAction: () => {
+        Notifications.discardAllNotifications();
+        Notifications.markAllRead();
+    }
 
     MaterialSymbol {
         id: bellIcon
@@ -60,8 +64,8 @@ RippleButton {
 
     PopupToolTip {
         text: Notifications.silent
-            ? Translation.tr("Notifications paused\nLeft: open center | Middle: resume")
-            : Translation.tr("Notifications\nLeft: open center | Middle: pause")
+            ? Translation.tr("Notifications paused\nLeft: open center | Right: clear | Middle: resume")
+            : Translation.tr("Notifications\nLeft: open center | Right: clear | Middle: pause")
         anchorEdges: (!Config.options.bar.bottom && !Config.options.bar.vertical) ? Edges.Bottom : Edges.Top
     }
 }

@@ -21,9 +21,9 @@ GPage {
                 currentValue: Config.options.cheatsheet.superKey
                 onSelected: newValue => Config.options.cheatsheet.superKey = newValue
                 options: ([
-                  "󰖳", "", "󰨡", "", "󰌽", "󰣇", "", "", "",
-                  "", "", "󱄛", "", "", "", "⌘", "󰀲", "󰟍", ""
-                ]).map(icon => ({ displayName: icon, value: icon }))
+                  "󰖳", "", "󰨡", "", "󰌽", "󰣇", "", "", "",
+                  "", "", "󱄛", "", "", "", "⌘", "󰀲", "󰟍", ""
+                ]).map(icon => ({ displayName: icon, value: icon, fontFamily: Appearance.font.family.iconNerd, pixelSize: Appearance.font.pixelSize.larger }))
             }
         }
 
@@ -105,6 +105,21 @@ GPage {
             buttonText: Translation.tr("Show pin & \"show all apps\" buttons")
             checked: Config.options.dock.showControlButtons
             onCheckedChanged: Config.options.dock.showControlButtons = checked
+        }
+        GRow {
+            uniform: true
+            GSpinRow {
+                text: Translation.tr("Dock size")
+                value: Config.options.dock.height
+                from: 50; to: 130; stepSize: 2
+                onValueChanged: Config.options.dock.height = value
+            }
+            GSpinRow {
+                text: Translation.tr("Icon size")
+                value: Config.options.dock.iconSize
+                from: 24; to: 64; stepSize: 2
+                onValueChanged: Config.options.dock.iconSize = value
+            }
         }
     }
 

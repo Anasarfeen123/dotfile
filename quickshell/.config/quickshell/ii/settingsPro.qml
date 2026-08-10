@@ -22,6 +22,8 @@ ApplicationWindow {
     id: root
     property real contentPadding: 10
     property string pendingScrollTitle: ""
+    property int previousPage: 0
+    property int pageSwitchDirection: 1
 
     property var pages: [
         { name: Translation.tr("Quick"), icon: "instant_mix", component: "modules/settingsPro/pages/QuickPage.qml" },
@@ -145,7 +147,7 @@ ApplicationWindow {
             fill: parent
             margins: root.contentPadding
         }
-        spacing: root.contentPadding
+        spacing: root.contentPadding + 2
 
         Keys.onPressed: event => {
             if (event.modifiers === Qt.ControlModifier) {
@@ -212,7 +214,7 @@ ApplicationWindow {
         RowLayout { // Nav rail + content
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: root.contentPadding
+            spacing: root.contentPadding + 2
 
             GNavRail {
                 id: navRail
@@ -231,8 +233,8 @@ ApplicationWindow {
                     id: fab
                     property bool justCopied: false
                     Layout.fillWidth: true
-                    Layout.topMargin: 4
-                    Layout.bottomMargin: 6
+                    Layout.topMargin: 2
+                    Layout.bottomMargin: 8
                     primary: true
                     buttonRadius: Appearance.rounding.full
                     implicitHeight: 44
@@ -262,7 +264,10 @@ ApplicationWindow {
                         required property var index
                         required property var modelData
                         toggled: root.currentPage === index
-                        onClicked: root.currentPage = index
+                        onClicked: {
+                            if (root.currentPage !== index)
+                                root.currentPage = index
+                        }
                         expanded: navRail.expanded
                         buttonIcon: modelData.icon
                         buttonIconRotation: modelData.iconRotation || 0
@@ -283,9 +288,9 @@ ApplicationWindow {
             GlassPane { // Content container
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                radius: Appearance.rounding.windowRounding - root.contentPadding
-                fillOpacity: 0.8
-                shadowBlur: 26
+                radius: Appearance.rounding.large
+                fillOpacity: 0.82
+                shadowBlur: 28
                 clip: true
 
                 ColumnLayout {
@@ -306,8 +311,10 @@ ApplicationWindow {
                         // (usually taller than one screen) has already
                         // snapped to its new scroll position. The slide
                         // gives the transition an actual sense of motion.
-                        property real slideOffset: 0
-                        transform: Translate { y: pageLoader.slideOffset }
+                        property real slideX: 0
+                        property real slideY: 0
+                        transformOrigin: Item.Center
+                        transform: Translate { x: pageLoader.slideX; y: pageLoader.slideY }
 
                         active: Config.ready
                         Component.onCompleted: source = root.pages[0].component
@@ -321,6 +328,8 @@ ApplicationWindow {
                         Connections {
                             target: root
                             function onCurrentPageChanged() {
+                                root.pageSwitchDirection = root.currentPage >= root.previousPage ? 1 : -1
+                                root.previousPage = root.currentPage
                                 switchAnim.complete()
                                 switchAnim.start()
                             }
@@ -333,37 +342,71 @@ ApplicationWindow {
                                     target: pageLoader
                                     properties: "opacity"
                                     from: 1; to: 0
-                                    duration: 70
+                                    duration: 95
                                     easing.type: Appearance.animation.elementMoveExit.type
                                     easing.bezierCurve: Appearance.animationCurves.emphasizedFirstHalf
                                 }
                                 NumberAnimation {
                                     target: pageLoader
-                                    properties: "slideOffset"
-                                    from: 0; to: -8
-                                    duration: 70
+                                    properties: "slideX"
+                                    from: 0; to: -22 * root.pageSwitchDirection
+                                    duration: 95
+                                    easing.type: Appearance.animation.elementMoveExit.type
+                                    easing.bezierCurve: Appearance.animationCurves.emphasizedFirstHalf
+                                }
+                                NumberAnimation {
+                                    target: pageLoader
+                                    properties: "slideY"
+                                    from: 0; to: -6
+                                    duration: 95
+                                    easing.type: Appearance.animation.elementMoveExit.type
+                                    easing.bezierCurve: Appearance.animationCurves.emphasizedFirstHalf
+                                }
+                                NumberAnimation {
+                                    target: pageLoader
+                                    properties: "scale"
+                                    from: 1; to: 0.985
+                                    duration: 95
                                     easing.type: Appearance.animation.elementMoveExit.type
                                     easing.bezierCurve: Appearance.animationCurves.emphasizedFirstHalf
                                 }
                             }
                             ParallelAnimation {
                                 PropertyAction { target: pageLoader; property: "source"; value: root.pages[root.currentPage].component }
-                                PropertyAction { target: pageLoader; property: "slideOffset"; value: 8 }
+                                PropertyAction { target: pageLoader; property: "slideX"; value: 24 * root.pageSwitchDirection }
+                                PropertyAction { target: pageLoader; property: "slideY"; value: 10 }
+                                PropertyAction { target: pageLoader; property: "scale"; value: 0.985 }
                             }
                             ParallelAnimation {
                                 NumberAnimation {
                                     target: pageLoader
                                     properties: "opacity"
                                     from: 0; to: 1
-                                    duration: 140
+                                    duration: 180
                                     easing.type: Appearance.animation.elementMoveEnter.type
                                     easing.bezierCurve: Appearance.animationCurves.emphasizedLastHalf
                                 }
                                 NumberAnimation {
                                     target: pageLoader
-                                    properties: "slideOffset"
-                                    from: 8; to: 0
-                                    duration: 140
+                                    properties: "slideX"
+                                    from: 24 * root.pageSwitchDirection; to: 0
+                                    duration: 180
+                                    easing.type: Appearance.animation.elementMoveEnter.type
+                                    easing.bezierCurve: Appearance.animationCurves.emphasizedLastHalf
+                                }
+                                NumberAnimation {
+                                    target: pageLoader
+                                    properties: "slideY"
+                                    from: 10; to: 0
+                                    duration: 180
+                                    easing.type: Appearance.animation.elementMoveEnter.type
+                                    easing.bezierCurve: Appearance.animationCurves.emphasizedLastHalf
+                                }
+                                NumberAnimation {
+                                    target: pageLoader
+                                    properties: "scale"
+                                    from: 0.985; to: 1
+                                    duration: 180
                                     easing.type: Appearance.animation.elementMoveEnter.type
                                     easing.bezierCurve: Appearance.animationCurves.emphasizedLastHalf
                                 }
