@@ -3,6 +3,9 @@ import Quickshell
 
 Singleton {
     id: root
+    // Battery saver keeps shell surfaces opaque so the compositor does not
+    // spend time blending translucent layers over the desktop.
+    property bool forceOpaqueSurfaces: false
 
     /**
      * Returns a color with the hue of color2 and the saturation, value, and alpha of color1.
@@ -122,7 +125,7 @@ Singleton {
     function applyAlpha(color, alpha) {
         var c = Qt.color(color);
         var a = Math.max(0, Math.min(1, alpha));
-        return Qt.rgba(c.r, c.g, c.b, a);
+        return Qt.rgba(c.r, c.g, c.b, root.forceOpaqueSurfaces ? 1 : a);
     }
 
     /**

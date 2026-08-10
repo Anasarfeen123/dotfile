@@ -38,10 +38,10 @@ Scope {
 
         Timer {
             id: closeTimer
-            // Matches revealClip's IslandSpring duration (480ms) + margin —
+            // Matches revealClip's IslandSpring duration (520ms) + margin —
             // has to outlast the shrink-to-pill animation or the window
             // unmaps mid-shrink.
-            interval: 480 + 60
+            interval: 520 + 70
             onTriggered: panelWindow.closing = false
         }
 
@@ -51,7 +51,7 @@ Scope {
         color: "transparent"
 
         mask: Region {
-            item: GlobalStates.overviewOpen ? revealClip : null
+            item: (panelWindow.wantsOpen || panelWindow.closing) ? revealClip : null
         }
 
         anchors {
@@ -121,18 +121,18 @@ Scope {
             // end, flush against its bottom edge by the time it's fully
             // open.
             readonly property real collapsedTopMargin: (Appearance.sizes.barHeight - collapsedHeight) / 2
-            readonly property real expandedTopMargin: Appearance.sizes.barHeight
+            readonly property real expandedTopMargin: Math.max(4, collapsedTopMargin - 8)
             anchors {
                 horizontalCenter: parent.horizontalCenter
                 top: parent.top
                 topMargin: collapsedTopMargin + (expandedTopMargin - collapsedTopMargin) * growthProgress
             }
 
-            // Both shrunk from 96/32 — a small dot emerging from the bar
-            // and swelling into the full panel reads as "coming from the
-            // bar" far more than an already fairly-large pill did.
-            readonly property real collapsedWidth: 28
-            readonly property real collapsedHeight: 10
+            // A compact center pill in the top bar. It stays large enough
+            // to read as the origin/terminus of the panel instead of
+            // vanishing into an arbitrary point.
+            readonly property real collapsedWidth: 52
+            readonly property real collapsedHeight: 12
             // Matches windowRounding, the same fixed corner radius the
             // dock/sidebars settle on — min(width,height)/2 alone doesn't
             // work here: at full size this panel is much taller than the
@@ -164,7 +164,7 @@ Scope {
                 // a bit more bounce (expressiveDefaultSpatial already has
                 // overshoot built in; slowing it down further makes that
                 // overshoot actually readable instead of snapping past it).
-                duration: 480
+                duration: 520
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: Appearance.animationCurves.expressiveDefaultSpatial
             }
@@ -190,7 +190,8 @@ Scope {
             Rectangle {
                 anchors.fill: parent
                 radius: revealClip.islandRadius
-                color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.72)
+                color: ColorUtils.applyAlpha(ColorUtils.mix(Appearance.colors.colLayer0Base, Appearance.colors.colPrimary, 0.98), 0.68)
+                border.width: 0
             }
 
             Column {
@@ -199,7 +200,7 @@ Scope {
                     horizontalCenter: parent.horizontalCenter
                     top: parent.top
                 }
-                spacing: -8
+                spacing: -6
 
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape) {

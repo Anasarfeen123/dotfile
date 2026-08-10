@@ -37,14 +37,13 @@ RowLayout {
             color: Appearance.colors.colOnLayer1
             opacity: root.enabled ? 1 : 0.4
         }
-        GText {
+        GMarqueeText {
             id: labelWidget
             Layout.fillWidth: true
+            Layout.preferredHeight: 20
             text: root.text
             font.pixelSize: Appearance.font.pixelSize.normal
             opacity: root.enabled ? 1 : 0.4
-            elide: Text.ElideRight
-            clip: true
         }
     }
 

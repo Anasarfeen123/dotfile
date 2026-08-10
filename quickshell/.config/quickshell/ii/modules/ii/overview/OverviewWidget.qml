@@ -34,15 +34,15 @@ Item {
     property real workspaceImplicitHeight: (monitorData?.transform % 2 === 1) ? 
         ((monitor.width - monitorData?.reserved[1] - monitorData?.reserved[3]) * root.scale / monitor.scale) :
         ((monitor.height - monitorData?.reserved[1] - monitorData?.reserved[3]) * root.scale / monitor.scale)
-    property real largeWorkspaceRadius: Appearance.rounding.large
-    property real smallWorkspaceRadius: Appearance.rounding.verysmall
+    property real largeWorkspaceRadius: Appearance.rounding.verylarge
+    property real smallWorkspaceRadius: Appearance.rounding.small
 
     property real workspaceNumberMargin: 80
     property real workspaceNumberSize: 250 * monitor.scale
     property int workspaceZ: 0
     property int windowZ: 1
     property int windowDraggingZ: 99999
-    property real workspaceSpacing: 5
+    property real workspaceSpacing: 8
 
     property int draggingFromWorkspace: -1
     property int draggingTargetWorkspace: -1
@@ -70,17 +70,18 @@ Item {
 
     Rectangle { // Background
         id: overviewBackground
-        property real padding: 10
+        property real padding: 14
         anchors.fill: parent
         anchors.margins: Appearance.sizes.elevationMargin
 
         implicitWidth: workspaceColumnLayout.implicitWidth + padding * 2
         implicitHeight: workspaceColumnLayout.implicitHeight + padding * 2
-        radius: root.largeWorkspaceRadius + padding
+        radius: root.largeWorkspaceRadius
         // Same glass recipe as the sidebars/dock/search bar above it —
         // was riding the global transparency token and reading flatter
         // than the rest of the overview.
-        color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.72)
+        color: ColorUtils.applyAlpha(ColorUtils.mix(Appearance.colors.colLayer0Base, Appearance.m3colors.m3shadow, 0.9), 0.7)
+        border.width: 0
         // This is one pane of the same floating capsule SearchWidget sits
         // in above (Overview.qml's revealClip owns the outer shape + one
         // shadow now) — its own border and drop shadow made it read as a
@@ -108,9 +109,9 @@ Item {
                             required property int index
                             property int colIndex: index
                             property int workspaceValue: root.workspaceGroup * root.workspacesShown + getWsInCell(row.index, colIndex)
-                            property color defaultWorkspaceColor: Appearance.colors.colSurfaceContainerLow
-                            property color hoveredWorkspaceColor: ColorUtils.mix(defaultWorkspaceColor, Appearance.colors.colLayer1Hover, 0.1)
-                            property color hoveredBorderColor: Appearance.colors.colLayer2Hover
+                            property color defaultWorkspaceColor: ColorUtils.applyAlpha(ColorUtils.mix(Appearance.colors.colSurfaceContainerLow, Appearance.m3colors.m3shadow, 0.72), 0.86)
+                            property color hoveredWorkspaceColor: ColorUtils.mix(defaultWorkspaceColor, Appearance.colors.colPrimaryContainer, 0.62)
+                            property color hoveredBorderColor: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.7)
                             property bool hoveredWhileDragging: false
 
                             implicitWidth: root.workspaceImplicitWidth
@@ -124,8 +125,11 @@ Item {
                             topRightRadius: (workspaceAtRight && workspaceAtTop) ? root.largeWorkspaceRadius : root.smallWorkspaceRadius
                             bottomLeftRadius: (workspaceAtLeft && workspaceAtBottom) ? root.largeWorkspaceRadius : root.smallWorkspaceRadius
                             bottomRightRadius: (workspaceAtRight && workspaceAtBottom) ? root.largeWorkspaceRadius : root.smallWorkspaceRadius
-                            border.width: 2
+                            border.width: hoveredWhileDragging ? 2 : 1
                             border.color: hoveredWhileDragging ? hoveredBorderColor : "transparent"
+
+                            Behavior on color { animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this) }
+                            Behavior on border.color { animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this) }
 
                             StyledText {
                                 anchors.centerIn: parent
@@ -135,7 +139,7 @@ Item {
                                     weight: Font.DemiBold
                                     family: Appearance.font.family.expressive
                                 }
-                                color: ColorUtils.transparentize(Appearance.colors.colOnLayer1, 0.8)
+                                color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.24)
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
                             }
@@ -212,7 +216,7 @@ Item {
                     property real yWithinWorkspaceWidget: Math.max((windowData?.at[1] - (monitor?.y ?? 0) - monitorData?.reserved[1]) * root.scale, 0)
 
                     // Radius
-                    property real minRadius: Appearance.rounding.small
+                    property real minRadius: Appearance.rounding.normal
                     property bool workspaceAtLeft: workspaceColIndex === 0
                     property bool workspaceAtRight: workspaceColIndex === Config.options.overview.columns - 1
                     property bool workspaceAtTop: workspaceRowIndex === 0
@@ -326,6 +330,7 @@ Item {
                 bottomRightRadius: (workspaceAtRight && workspaceAtBottom) ? root.largeWorkspaceRadius : root.smallWorkspaceRadius
                 border.width: 2
                 border.color: root.activeBorderColor
+                opacity: 0.9
                 Behavior on x {
                     animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
                 }

@@ -39,8 +39,9 @@ GButton {
             color: root.contentColor
             opacity: root.enabled ? 1 : 0.4
         }
-        GText {
+        GMarqueeText {
             Layout.fillWidth: true
+            Layout.preferredHeight: 20
             text: root.buttonText
             color: root.contentColor
             opacity: root.enabled ? 1 : 0.4

@@ -13,28 +13,31 @@ import Quickshell.Widgets
 import Quickshell.Wayland
 import Quickshell.Hyprland
 
-Scope { // Scope
+// A floating, macOS-style glass dock. One PanelWindow per monitor, hidden
+// until hovered (or pinned open), housing an optional pin toggle, the
+// running/pinned app row, and an optional "show all apps" launcher.
+Scope {
     id: root
-    property bool pinned: Config.options?.dock.pinnedOnStartup ?? false
+    // Explicit Config.ready dependency (the pattern used elsewhere in the
+    // shell for exactly this reason) rather than relying on Config.options
+    // being read through the ?. chain alone to register as a live binding
+    // dependency once the config file actually finishes loading.
+    property bool pinned: Config.ready && (Config.options?.dock.pinnedOnStartup ?? false)
 
     Variants {
-        // For each monitor
         model: Quickshell.screens
 
         PanelWindow {
             id: dockRoot
-            // Window
             required property var modelData
             screen: modelData
             visible: !GlobalStates.screenLocked
 
-            // Dropped the old "reveal whenever no window is focused" clause
-            // entirely — it fired during completely normal things (closing
-            // a window, switching workspaces, anything with a momentary gap
-            // between one window losing focus and the next gaining it), so
-            // the dock would pop up unpredictably outside of an actual
-            // hover or pin. Reveal is now just: pinned, hovering, or a
-            // preview popup wants it visible — nothing implicit.
+            // Reveal is just: pinned, hovering the reveal strip, or a
+            // window-preview popup wants to stay visible — nothing
+            // implicit like "no window is focused", which used to pop the
+            // dock up unpredictably during totally normal things (closing
+            // a window, switching workspaces).
             //
             // Still debounced: show instantly, hide only after a short
             // grace period, so a momentary mouse blip off the hover region
@@ -64,21 +67,23 @@ Scope { // Scope
                 right: true
             }
 
-            // How far the dock floats above the actual screen edge — a
-            // proper macOS-style floating dock needs a real visible gap of
-            // its own here, not the same small value used for in-between
-            // window gaps elsewhere (Appearance.sizes.hyprlandGapsOut,
-            // which this used to reuse and which reads as "barely lifted"
-            // rather than "floating").
-            readonly property real floatGap: 16
+            // How far the dock floats above the actual screen edge. A
+            // proper macOS-style floating dock needs a real, deliberate
+            // gap of its own — not the same small value used for
+            // in-between window gaps elsewhere, which reads as "barely
+            // lifted" rather than "floating".
+            readonly property real floatGap: 18
+            // More headroom than the icon canvas strictly needs at rest —
+            // guarantees the hover magnify + lift never visually pokes
+            // past the pill's own top edge, no matter how it's tuned.
+            readonly property real dockHeight: Config.options?.dock.height ?? 88
 
             exclusiveZone: root.pinned ? implicitHeight - floatGap - (Appearance.sizes.elevationMargin - floatGap) : 0
 
             implicitWidth: dockBackground.implicitWidth
+            implicitHeight: dockHeight + Appearance.sizes.elevationMargin + floatGap
             WlrLayershell.namespace: "quickshell:dock"
             color: "transparent"
-
-            implicitHeight: (Config.options?.dock.height ?? 70) + Appearance.sizes.elevationMargin + floatGap
 
             mask: Region {
                 item: dockMouseArea
@@ -112,27 +117,31 @@ Scope { // Scope
                             horizontalCenter: parent.horizontalCenter
                         }
 
-                        implicitWidth: dockRow.implicitWidth + 5 * 2
+                        // Was + 5*2 — a leftover from the old flush-taskbar
+                        // sizing that left almost no real end-cap padding
+                        // on the pill once everything else got more
+                        // generous. A proper floating pill wants visible
+                        // rounded space at both ends, not content sitting
+                        // right at the curve.
+                        implicitWidth: dockRow.implicitWidth + 26 * 2
                         height: parent.height - Appearance.sizes.elevationMargin - Appearance.sizes.hyprlandGapsOut
 
                         StyledRectangularShadow {
                             target: dockVisualBackground
                         }
-                        Rectangle { // The real rectangle that is visible
+                        Rectangle { // The real, visible glass surface
                             id: dockVisualBackground
                             property real margin: Appearance.sizes.elevationMargin
                             anchors.fill: parent
                             anchors.topMargin: Appearance.sizes.elevationMargin
                             anchors.bottomMargin: dockRoot.floatGap
+
                             // A soft vertical gradient instead of a flat
                             // fill — real glass/acrylic isn't a single flat
                             // tint, it reads lighter/more see-through near
                             // the top and a little denser toward the
-                            // bottom. Also more transparent overall now
-                            // (was a flat 0.72) for a genuinely glassy feel
-                            // against the compositor blur behind it, rather
-                            // than a solid tinted panel that happens to
-                            // have blur turned on.
+                            // bottom, on top of the compositor blur behind
+                            // it (see rules.lua's dock[0-9]* layer rule).
                             gradient: Gradient {
                                 orientation: Gradient.Vertical
                                 GradientStop { position: 0.0; color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.56) }
@@ -140,25 +149,20 @@ Scope { // Scope
                             }
                             border.width: 1
                             border.color: Appearance.colors.colLayer0Border
-                            // A true capsule (fully rounded ends) instead of
-                            // the fixed windowRounding token that every
-                            // other rectangular panel uses — this is the
-                            // one shape in the shell that's actually pill-
-                            // shaped end to end, macOS-dock style, rather
-                            // than just a rounded rectangle.
+                            // A true capsule (fully rounded ends), not the
+                            // fixed windowRounding token every other panel
+                            // uses — this is the one shape in the shell
+                            // that's actually pill-shaped end to end.
                             radius: height / 2
                             clip: true
 
-                            // A faint top-edge highlight — the thin bright
-                            // line real glass/acrylic catches along its top
-                            // edge — for some actual material depth instead
-                            // of a flat translucent fill.
+                            // Edge highlights — the thin bright line real
+                            // glass/acrylic catches along its curved
+                            // profile, top and (fainter) bottom, for actual
+                            // material depth instead of a flat translucent
+                            // fill.
                             Rectangle {
-                                anchors {
-                                    top: parent.top
-                                    left: parent.left
-                                    right: parent.right
-                                }
+                                anchors { top: parent.top; left: parent.left; right: parent.right }
                                 height: 1
                                 gradient: Gradient {
                                     orientation: Gradient.Horizontal
@@ -167,18 +171,8 @@ Scope { // Scope
                                     GradientStop { position: 1.0; color: ColorUtils.transparentize(Appearance.colors.colOnLayer0, 1) }
                                 }
                             }
-
-                            // A second, fainter highlight along the bottom
-                            // edge — real glass/acrylic catches light on
-                            // both edges of its curved profile, not just
-                            // the top. Kept subtler than the top one so it
-                            // doesn't compete with it.
                             Rectangle {
-                                anchors {
-                                    bottom: parent.bottom
-                                    left: parent.left
-                                    right: parent.right
-                                }
+                                anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
                                 height: 1
                                 gradient: Gradient {
                                     orientation: Gradient.Horizontal
@@ -194,30 +188,31 @@ Scope { // Scope
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
                             anchors.horizontalCenter: parent.horizontalCenter
-                            // Both bumped up from 3/5 — a floating pill dock
-                            // wants real breathing room between icons, not
-                            // the tight spacing that suited the old flush-
-                            // to-edge bar look.
-                            spacing: 10
-                            property real padding: 10
+                            // Generous spacing/padding — a floating pill
+                            // dock wants real breathing room between icons,
+                            // not the tight spacing that suited the old
+                            // flush-to-edge taskbar look.
+                            spacing: 20
+                            property real padding: 16
 
                             VerticalButtonGroup {
-                                // Off by default — see Config.options.dock.
-                                // showControlButtons. Pin/launcher are
-                                // control chrome, not apps; a bare macOS-
-                                // style dock reads cleaner without them,
-                                // and this is re-enableable in Settings.
+                                // Off by default — see
+                                // Config.options.dock.showControlButtons.
+                                // Pin/launcher are control chrome, not
+                                // apps; a bare macOS-style dock reads
+                                // cleaner without them, and this is
+                                // re-enableable in Settings.
                                 visible: Config.options.dock.showControlButtons
-                                Layout.topMargin: Appearance.sizes.hyprlandGapsOut // why does this work
+                                Layout.topMargin: Appearance.sizes.hyprlandGapsOut
                                 GroupButton {
-                                    // Pin button — a filled circle once
-                                    // toggled instead of a same-shaped
-                                    // rounded-square as everything else, so
-                                    // it reads as a distinct mode toggle
-                                    // rather than another app-like icon.
+                                    // A filled circle once toggled instead
+                                    // of a same-shaped rounded-square as
+                                    // everything else, so it reads as a
+                                    // distinct mode toggle rather than
+                                    // another app-like icon.
                                     id: pinButton
-                                    baseWidth: 38
-                                    baseHeight: 38
+                                    baseWidth: 40
+                                    baseHeight: 40
                                     clickedWidth: baseWidth
                                     clickedHeight: baseHeight + 20
                                     buttonRadius: root.pinned ? Appearance.rounding.full : Appearance.rounding.normal

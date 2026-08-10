@@ -3,4 +3,4 @@
 hl.config({decoration={blur={enabled=true}}})
 hl.config({decoration={blur={passes=3}}})
 hl.config({decoration={blur={brightness=1}}})
-hl.config({decoration={blur={size=10}}})
+hl.config({decoration={blur={size=6}}})

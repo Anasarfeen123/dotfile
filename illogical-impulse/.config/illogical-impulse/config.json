@@ -35,7 +35,7 @@
             "type": "scheme-neutral"
         },
         "transparency": {
-            "automatic": false,
+            "automatic": true,
             "backgroundTransparency": 0.07857534461152882,
             "contentTransparency": 0.5936227286967418,
             "enable": true
@@ -244,7 +244,7 @@
     },
     "dock": {
         "enable": true,
-        "height": 68,
+        "height": 76,
         "hoverRegionHeight": 8,
         "hoverToReveal": true,
         "ignoredAppRegexes": [],

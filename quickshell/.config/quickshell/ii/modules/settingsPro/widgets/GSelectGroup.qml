@@ -16,9 +16,12 @@ Flow {
     Repeater {
         model: root.options
         delegate: GButton {
+            id: optionButton
             required property var modelData
             buttonIcon: modelData.icon || ""
             buttonText: modelData.displayName || ""
+            textFontFamily: modelData.fontFamily || Appearance.font.family.main
+            textPixelSize: modelData.pixelSize || Appearance.font.pixelSize.small
             toggled: root.currentValue == modelData.value
             primary: toggled
             buttonRadius: Appearance.rounding.full
