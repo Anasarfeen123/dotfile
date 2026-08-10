@@ -219,6 +219,12 @@ ApplicationWindow {
                 Layout.fillHeight: true
                 expanded: root.width > 940
 
+                // Was only a trailing fillHeight spacer, which pins
+                // everything to the top with all the leftover space
+                // dumped below it — a matching spacer up here instead
+                // centers the whole nav block vertically in the rail.
+                Item { Layout.fillHeight: true }
+
                 GNavExpandButton { focus: root.visible }
 
                 GButton {

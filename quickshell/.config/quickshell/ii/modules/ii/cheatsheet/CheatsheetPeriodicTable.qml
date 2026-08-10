@@ -28,17 +28,11 @@ Item {
         contentHeight: mainLayout.implicitHeight
         boundsBehavior: Flickable.StopAtBounds
 
-        // StyledFlickable only animates contentY by default (it's built
-        // for vertical lists) — this table scrolls horizontally, so the
-        // scroll-step buttons below need their own contentX Behavior or
-        // they'd just snap instead of sliding.
-        Behavior on contentX {
-            NumberAnimation {
-                duration: Appearance.animation.scroll.duration
-                easing.type: Appearance.animation.scroll.type
-                easing.bezierCurve: Appearance.animation.scroll.bezierCurve
-            }
-        }
+        // StyledFlickable itself now provides a contentX Behavior (and
+        // properly maps plain vertical wheel scroll onto the horizontal
+        // axis when there's no vertical room) — this used to duplicate
+        // that here, which would now just conflict with the base
+        // component's own Behavior on the same property.
 
         Column {
             id: mainLayout
@@ -96,13 +90,22 @@ Item {
     // Explicit scroll buttons as a guaranteed way to reach the edges,
     // regardless of whether wheel/trackpad scroll reaches the Flickable
     // (it can end up in front of a lot of clickable element tiles).
+    //
+    // Was 32px with only a 4px margin from the edge — right where the
+    // overflowing last column of element tiles also lives, so the button
+    // and a tile's own click target overlapped and it was very easy to
+    // land on the tile (opening its details) instead of the button.
+    // Bigger and pulled in further so it's a clearly separate target, plus
+    // a soft backing plate so it doesn't visually blend into whatever
+    // tile happens to sit behind it.
     component ScrollStepButton: RippleButton {
         id: stepBtn
         required property real direction // -1 or 1
-        implicitWidth: 32
-        implicitHeight: 32
+        implicitWidth: 40
+        implicitHeight: 40
         buttonRadius: Appearance.rounding.full
-        colBackground: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.85)
+        colBackground: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.95)
+        colBackgroundHover: Appearance.colors.colPrimaryContainer
         visible: stepBtn.direction < 0 ? flickable.contentX > 1 : flickable.contentX < flickable.contentWidth - flickable.width - 1
         onClicked: {
             const maxX = Math.max(0, flickable.contentWidth - flickable.width);
@@ -110,18 +113,22 @@ Item {
         }
         contentItem: MaterialSymbol {
             anchors.centerIn: parent
-            iconSize: 20
+            iconSize: 22
             text: stepBtn.direction < 0 ? "chevron_left" : "chevron_right"
             color: Appearance.colors.colOnLayer0
         }
     }
 
+    StyledRectangularShadow { target: leftScrollBtn; opacity: leftScrollBtn.visible ? 1 : 0 }
     ScrollStepButton {
-        anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 4 }
+        id: leftScrollBtn
+        anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 14 }
         direction: -1
     }
+    StyledRectangularShadow { target: rightScrollBtn; opacity: rightScrollBtn.visible ? 1 : 0 }
     ScrollStepButton {
-        anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 4 }
+        id: rightScrollBtn
+        anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 14 }
         direction: 1
     }
 }

@@ -108,22 +108,31 @@ Scope {
 
         Item {
             id: revealClip
+            // Was unset, i.e. 0 — the panel's top (and the entire collapsed
+            // pill) sat fully behind the top bar, invisible until the grow
+            // animation had already pushed it taller than the bar. A
+            // *fixed* offset can't be right for both ends of the
+            // animation though: collapsed, the tiny pill needs to sit
+            // vertically centered *inside* the bar's own height to read as
+            // part of the bar; expanded, the full panel needs to clear the
+            // bar entirely so it doesn't cut across the bar's own icons
+            // and text. So this blends with growthProgress just like
+            // islandRadius does below — centered in the bar at the small
+            // end, flush against its bottom edge by the time it's fully
+            // open.
+            readonly property real collapsedTopMargin: (Appearance.sizes.barHeight - collapsedHeight) / 2
+            readonly property real expandedTopMargin: Appearance.sizes.barHeight
             anchors {
                 horizontalCenter: parent.horizontalCenter
                 top: parent.top
-                // Was unset, i.e. 0 — the panel's top (and the collapsed
-                // pill's entire 32px) sat right behind the top bar, fully
-                // hidden by it. It only became visible once the grow
-                // animation had already pushed it taller than the bar, so
-                // it looked like it just materialized mid-animation rather
-                // than actually emerging from the bar. Starting flush with
-                // the bar's bottom edge means the collapsed pill is visible
-                // from frame one, growing downward from the bar itself.
-                topMargin: Appearance.sizes.barHeight
+                topMargin: collapsedTopMargin + (expandedTopMargin - collapsedTopMargin) * growthProgress
             }
 
-            readonly property real collapsedWidth: 96
-            readonly property real collapsedHeight: 32
+            // Both shrunk from 96/32 — a small dot emerging from the bar
+            // and swelling into the full panel reads as "coming from the
+            // bar" far more than an already fairly-large pill did.
+            readonly property real collapsedWidth: 28
+            readonly property real collapsedHeight: 10
             // Matches windowRounding, the same fixed corner radius the
             // dock/sidebars settle on — min(width,height)/2 alone doesn't
             // work here: at full size this panel is much taller than the

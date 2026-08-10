@@ -176,7 +176,12 @@ GPage {
             GSliderRow {
                 text: Translation.tr("Content transparency")
                 buttonIcon: "invert_colors"
-                enabled: !Config.options.appearance.transparency.automatic
+                // Was missing the `enable` half of this condition (present
+                // on the Background transparency slider right above) — so
+                // with transparency itself turned off but Automatic left
+                // off too, this slider stayed editable even though
+                // transparency wasn't in effect at all.
+                enabled: Config.options.appearance.transparency.enable && !Config.options.appearance.transparency.automatic
                 value: Config.options.appearance.transparency.contentTransparency * 100
                 from: 0; to: 100
                 stopIndicatorValues: [57]

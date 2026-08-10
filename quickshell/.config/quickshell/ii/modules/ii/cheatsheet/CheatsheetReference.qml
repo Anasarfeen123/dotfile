@@ -95,13 +95,17 @@ Item {
 
     // Explicit scroll buttons as a guaranteed way to reach the edges,
     // regardless of whether wheel/trackpad scroll reaches the Flickable.
+    // Bigger and pulled in further from the edge than before (was 32px at
+    // a 4px margin, easy to miss and easy to fat-finger the content behind
+    // it instead) — matches the periodic table's scroll buttons.
     component ScrollStepButton: RippleButton {
         id: stepBtn
         required property real direction // -1 or 1
-        implicitWidth: 32
-        implicitHeight: 32
+        implicitWidth: 40
+        implicitHeight: 40
         buttonRadius: Appearance.rounding.full
-        colBackground: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.85)
+        colBackground: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.95)
+        colBackgroundHover: Appearance.colors.colPrimaryContainer
         visible: stepBtn.direction < 0 ? flickable.contentY > 1 : flickable.contentY < flickable.contentHeight - flickable.height - 1
         onClicked: {
             const maxY = Math.max(0, flickable.contentHeight - flickable.height);
@@ -109,18 +113,22 @@ Item {
         }
         contentItem: MaterialSymbol {
             anchors.centerIn: parent
-            iconSize: 20
+            iconSize: 22
             text: stepBtn.direction < 0 ? "keyboard_arrow_up" : "keyboard_arrow_down"
             color: Appearance.colors.colOnLayer0
         }
     }
 
+    StyledRectangularShadow { target: topScrollBtn; opacity: topScrollBtn.visible ? 1 : 0 }
     ScrollStepButton {
-        anchors { top: parent.top; horizontalCenter: parent.horizontalCenter; topMargin: 4 }
+        id: topScrollBtn
+        anchors { top: parent.top; horizontalCenter: parent.horizontalCenter; topMargin: 14 }
         direction: -1
     }
+    StyledRectangularShadow { target: bottomScrollBtn; opacity: bottomScrollBtn.visible ? 1 : 0 }
     ScrollStepButton {
-        anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter; bottomMargin: 4 }
+        id: bottomScrollBtn
+        anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter; bottomMargin: 14 }
         direction: 1
     }
 

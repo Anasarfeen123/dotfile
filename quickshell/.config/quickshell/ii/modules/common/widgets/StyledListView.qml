@@ -36,12 +36,21 @@ ListView {
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
         onWheel: function(wheelEvent) {
+            const maxY = Math.max(0, root.contentHeight - root.height);
+            // Was unconditional — for a horizontal ListView (e.g. the
+            // dock's icon row), this always computed a no-op contentY (no
+            // vertical room) and still swallowed the event, blocking
+            // native horizontal wheel scrolling from ever getting a turn.
+            if (maxY <= 0) {
+                wheelEvent.accepted = false;
+                return;
+            }
+
             const delta = wheelEvent.angleDelta.y / root.mouseScrollDeltaThreshold;
             // The angleDelta.y of a touchpad is usually small and continuous,
             // while that of a mouse wheel is typically in multiples of ±120.
             var scrollFactor = Math.abs(wheelEvent.angleDelta.y) >= root.mouseScrollDeltaThreshold ? root.mouseScrollFactor : root.touchpadScrollFactor;
 
-            const maxY = Math.max(0, root.contentHeight - root.height);
             const base = scrollAnim.running ? root.scrollTargetY : root.contentY;
             var targetY = Math.max(0, Math.min(base - delta * scrollFactor, maxY));
 

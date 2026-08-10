@@ -703,7 +703,11 @@ ContentPage {
     }
 
     ContentSection {
-        icon: "scroll"
+        // Was "scroll" — a real Material Symbols name, but apparently not
+        // present in whatever version of the font is actually installed,
+        // so it fell back to rendering as literal text instead of a
+        // glyph. "mouse" is a long-established icon, safe everywhere.
+        icon: "mouse"
         title: Translation.tr("Scrolling")
 
         ConfigSwitch {

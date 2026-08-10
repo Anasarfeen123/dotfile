@@ -216,10 +216,15 @@ for i = 1, 10 do
 end
 
 --# #/# bind = SUPER+SHIFT, Scroll ↑/↓,, -- Send to workspace left/right
+-- Was down="r-1"/up="r+1" (matching the SUPER+scroll *focus* convention
+-- below: up=next, down=previous). Reported repeatedly as feeling backwards
+-- specifically for this move-window action even though the matching
+-- focus-scroll direction wasn't -- flipped so down=next/up=previous here,
+-- independent of the focus bind's own convention.
 for i = 1, 4 do
     local key = { "SUPER + SHIFT + mouse_", "SUPER + ALT + mouse_" }
     local keycombos = { key[1] .. "down", key[1] .. "up", key[2] .. "down", key[2] .. "up" }
-    local prefix = { "r-", "r+", "r-", "r+" }
+    local prefix = { "r+", "r-", "r+", "r-" }
     hl.bind(keycombos[i], hl.dsp.window.move({ workspace = prefix[i] .. "1" }))
 end
 
@@ -341,7 +346,13 @@ hl.bind("SUPER + ALT + Equal",
     hl.dsp.exec_cmd("notify-send 'Urgent notification' 'Ah hell no' -u critical -a 'Hyprland keybind'")) -- # [hidden]
 
 --##! Session
-hl.bind("SUPER + L", hl.dsp.exec_cmd("hyprlock"), { description = "Session: Lock" })
+-- Was a raw exec of the standalone hyprlock binary, which always launches
+-- the plain hyprlock UI regardless of Config.options.lock.useHyprlock --
+-- hypridle's own lock/after-sleep triggers already went through the
+-- Quickshell IPC path so they respect that setting, but this manual
+-- keybind never got the same treatment, so locking via Super+L vs. idle
+-- timeout showed two different, inconsistent lock screens.
+hl.bind("SUPER + L", hl.dsp.exec_cmd("qs -c ii ipc call lock activate"), { description = "Session: Lock" })
 hl.bind("SUPER + SHIFT + L", hl.dsp.exec_cmd("systemctl suspend || loginctl suspend"),
     { locked = true, description = "Session: Sleep" }) -- Sleep
 -- hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd("systemctl suspend || loginctl suspend"), {locked = true} ) -- # [hidden] Suspend when laptop lid is closed, uncomment if for whatever reason it's not the default behavior

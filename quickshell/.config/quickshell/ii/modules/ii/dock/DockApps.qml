@@ -30,7 +30,11 @@ Item {
     property real pointerX: -1
 
     Layout.fillHeight: true
-    Layout.topMargin: Appearance.sizes.hyprlandGapsOut
+    // Was Layout.topMargin: Appearance.sizes.hyprlandGapsOut with no
+    // matching bottom margin — an asymmetric top-only offset that shifted
+    // every app icon down a few px from true vertical center, while the
+    // pin/launcher buttons elsewhere in the row use symmetric top+bottom
+    // insets. That mismatch is what read as "icons aren't aligned".
     implicitWidth: listView.implicitWidth
 
     function popupCenterXForButton(button) {
