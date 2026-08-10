@@ -243,9 +243,17 @@ RippleButton {
                 }
             }
             Loader { // Clipboard image preview
+                // Layout.fillWidth belongs here, on the actual ColumnLayout
+                // child — it was set on the loaded CliphistImage instead,
+                // which the Layout has no idea exists. That left this
+                // Loader's width unstable (sized to whatever CliphistImage's
+                // own maxWidth-dependent implicit size happened to resolve
+                // to first), which is what was causing the image preview to
+                // overlap the name text above it instead of cleanly
+                // reserving its own row.
+                Layout.fillWidth: true
                 active: root.cliphistRawString && Cliphist.entryIsImage(root.cliphistRawString)
                 sourceComponent: CliphistImage {
-                    Layout.fillWidth: true
                     entry: root.cliphistRawString
                     maxWidth: contentColumn.width
                     // Was 140 — full-desktop screenshots (1080px+ tall) got

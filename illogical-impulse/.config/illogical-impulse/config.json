@@ -244,7 +244,7 @@
     },
     "dock": {
         "enable": true,
-        "height": 60,
+        "height": 68,
         "hoverRegionHeight": 8,
         "hoverToReveal": true,
         "ignoredAppRegexes": [],
@@ -310,6 +310,8 @@
         "launchOnStartup": false,
         "materialShapeChars": true,
         "security": {
+            "allowRevealToggle": true,
+            "peekLastChar": true,
             "requirePasswordToPower": false,
             "unlockKeyring": true
         },

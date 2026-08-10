@@ -16,7 +16,10 @@ DockButton {
     property var appToplevel
     property var appListRoot
     property int lastFocused: -1
-    property real iconSize: 35
+    // Was 35 — a floating pill dock with real padding around it reads
+    // better with more substantial icons, macOS-dock style, rather than
+    // small icons in a flush taskbar strip.
+    property real iconSize: 40
     property real countDotWidth: 10
     property real countDotHeight: 4
     property bool appIsActive: appToplevel.toplevels.find(t => (t.activated == true)) !== undefined
@@ -231,7 +234,12 @@ DockButton {
         }
         Rectangle {
             id: menuBackground
-            color: Appearance.m3colors.m3surfaceContainer
+            // Was a flat M3 surfaceContainer color — every other floating
+            // surface in the shell (dock, sidebars, search/overview panel)
+            // uses this same translucent glass recipe, so this menu looked
+            // like a different, unrelated app's popup instead of part of
+            // the same UI.
+            color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.72)
             radius: Appearance.rounding.normal
             border.width: 1
             border.color: Appearance.colors.colLayer0Border

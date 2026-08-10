@@ -64,13 +64,21 @@ Scope { // Scope
                 right: true
             }
 
-            exclusiveZone: root.pinned ? implicitHeight - (Appearance.sizes.hyprlandGapsOut) - (Appearance.sizes.elevationMargin - Appearance.sizes.hyprlandGapsOut) : 0
+            // How far the dock floats above the actual screen edge — a
+            // proper macOS-style floating dock needs a real visible gap of
+            // its own here, not the same small value used for in-between
+            // window gaps elsewhere (Appearance.sizes.hyprlandGapsOut,
+            // which this used to reuse and which reads as "barely lifted"
+            // rather than "floating").
+            readonly property real floatGap: 16
+
+            exclusiveZone: root.pinned ? implicitHeight - floatGap - (Appearance.sizes.elevationMargin - floatGap) : 0
 
             implicitWidth: dockBackground.implicitWidth
             WlrLayershell.namespace: "quickshell:dock"
             color: "transparent"
 
-            implicitHeight: (Config.options?.dock.height ?? 70) + Appearance.sizes.elevationMargin + Appearance.sizes.hyprlandGapsOut
+            implicitHeight: (Config.options?.dock.height ?? 70) + Appearance.sizes.elevationMargin + floatGap
 
             mask: Region {
                 item: dockMouseArea
@@ -115,7 +123,7 @@ Scope { // Scope
                             property real margin: Appearance.sizes.elevationMargin
                             anchors.fill: parent
                             anchors.topMargin: Appearance.sizes.elevationMargin
-                            anchors.bottomMargin: Appearance.sizes.hyprlandGapsOut
+                            anchors.bottomMargin: dockRoot.floatGap
                             // Same fixed glass recipe as the sidebars
                             // (colLayer0Base @ 0.72 + hairline border), not
                             // the generic colLayer0 token — that one rides
@@ -125,7 +133,13 @@ Scope { // Scope
                             color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.72)
                             border.width: 1
                             border.color: Appearance.colors.colLayer0Border
-                            radius: Appearance.rounding.windowRounding
+                            // A true capsule (fully rounded ends) instead of
+                            // the fixed windowRounding token that every
+                            // other rectangular panel uses — this is the
+                            // one shape in the shell that's actually pill-
+                            // shaped end to end, macOS-dock style, rather
+                            // than just a rounded rectangle.
+                            radius: height / 2
                             clip: true
 
                             // A faint top-edge highlight — the thin bright
@@ -153,8 +167,12 @@ Scope { // Scope
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
                             anchors.horizontalCenter: parent.horizontalCenter
-                            spacing: 3
-                            property real padding: 5
+                            // Both bumped up from 3/5 — a floating pill dock
+                            // wants real breathing room between icons, not
+                            // the tight spacing that suited the old flush-
+                            // to-edge bar look.
+                            spacing: 10
+                            property real padding: 10
 
                             VerticalButtonGroup {
                                 Layout.topMargin: Appearance.sizes.hyprlandGapsOut // why does this work
@@ -165,8 +183,8 @@ Scope { // Scope
                                     // it reads as a distinct mode toggle
                                     // rather than another app-like icon.
                                     id: pinButton
-                                    baseWidth: 35
-                                    baseHeight: 35
+                                    baseWidth: 38
+                                    baseHeight: 38
                                     clickedWidth: baseWidth
                                     clickedHeight: baseHeight + 20
                                     buttonRadius: root.pinned ? Appearance.rounding.full : Appearance.rounding.normal
