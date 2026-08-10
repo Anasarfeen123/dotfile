@@ -312,6 +312,18 @@ Item { // Bar content region
                         NotificationUnreadCount {
                             id: notificationUnreadCount
                         }
+
+                        // Right-click the notification icon specifically to
+                        // clear everything, without needing to open the
+                        // sidebar first. Only claims the right button, so
+                        // a left click still falls through to
+                        // rightSidebarButton underneath as normal.
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.RightButton
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Notifications.discardAllNotifications()
+                        }
                     }
                     RowLayout {
                         spacing: 2

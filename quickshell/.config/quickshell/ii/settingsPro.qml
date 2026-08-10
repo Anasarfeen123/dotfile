@@ -300,6 +300,15 @@ ApplicationWindow {
                         opacity: 1.0
                         asynchronous: true
 
+                        // A small vertical settle alongside the existing
+                        // opacity cross-fade — was fade-only, which reads
+                        // as a flat cut once the page content itself
+                        // (usually taller than one screen) has already
+                        // snapped to its new scroll position. The slide
+                        // gives the transition an actual sense of motion.
+                        property real slideOffset: 0
+                        transform: Translate { y: pageLoader.slideOffset }
+
                         active: Config.ready
                         Component.onCompleted: source = root.pages[0].component
                         onLoaded: {
@@ -319,22 +328,41 @@ ApplicationWindow {
 
                         SequentialAnimation {
                             id: switchAnim
-                            NumberAnimation {
-                                target: pageLoader
-                                properties: "opacity"
-                                from: 1; to: 0
-                                duration: 70
-                                easing.type: Appearance.animation.elementMoveExit.type
-                                easing.bezierCurve: Appearance.animationCurves.emphasizedFirstHalf
+                            ParallelAnimation {
+                                NumberAnimation {
+                                    target: pageLoader
+                                    properties: "opacity"
+                                    from: 1; to: 0
+                                    duration: 70
+                                    easing.type: Appearance.animation.elementMoveExit.type
+                                    easing.bezierCurve: Appearance.animationCurves.emphasizedFirstHalf
+                                }
+                                NumberAnimation {
+                                    target: pageLoader
+                                    properties: "slideOffset"
+                                    from: 0; to: -8
+                                    duration: 70
+                                    easing.type: Appearance.animation.elementMoveExit.type
+                                    easing.bezierCurve: Appearance.animationCurves.emphasizedFirstHalf
+                                }
                             }
                             ParallelAnimation {
                                 PropertyAction { target: pageLoader; property: "source"; value: root.pages[root.currentPage].component }
+                                PropertyAction { target: pageLoader; property: "slideOffset"; value: 8 }
                             }
                             ParallelAnimation {
                                 NumberAnimation {
                                     target: pageLoader
                                     properties: "opacity"
                                     from: 0; to: 1
+                                    duration: 140
+                                    easing.type: Appearance.animation.elementMoveEnter.type
+                                    easing.bezierCurve: Appearance.animationCurves.emphasizedLastHalf
+                                }
+                                NumberAnimation {
+                                    target: pageLoader
+                                    properties: "slideOffset"
+                                    from: 8; to: 0
                                     duration: 140
                                     easing.type: Appearance.animation.elementMoveEnter.type
                                     easing.bezierCurve: Appearance.animationCurves.emphasizedLastHalf

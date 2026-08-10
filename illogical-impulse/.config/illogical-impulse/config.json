@@ -35,9 +35,9 @@
             "type": "scheme-neutral"
         },
         "transparency": {
-            "automatic": true,
-            "backgroundTransparency": 0.36665162454873645,
-            "contentTransparency": 0.57,
+            "automatic": false,
+            "backgroundTransparency": 0.07857534461152882,
+            "contentTransparency": 0.5936227286967418,
             "enable": true
         },
         "wallpaperTheming": {
@@ -120,14 +120,14 @@
                 "showOnlyWhenLocked": false,
                 "style": "cookie",
                 "styleLocked": "cookie",
-                "x": 230.7890625,
-                "y": 896.3124999999999
+                "x": 239.22265625,
+                "y": 604.4453125
             },
             "weather": {
                 "enable": true,
                 "placementStrategy": "free",
-                "x": 1392.0078125,
-                "y": 363.8671875
+                "x": 1448.48046875,
+                "y": 138.64453125
             }
         }
     },
@@ -448,8 +448,8 @@
         },
         "keepRightSidebarLoaded": true,
         "quickSliders": {
-            "enable": false,
-            "showBrightness": false,
+            "enable": true,
+            "showBrightness": true,
             "showMic": true,
             "showVolume": true
         },

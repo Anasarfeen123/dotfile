@@ -724,7 +724,8 @@ ContentPage {
         }
 
         ConfigSwitch {
-            buttonIcon: "touchpad"
+            // "touchpad" isn't in the installed font; "trackpad_input" is.
+            buttonIcon: "trackpad_input"
             text: Translation.tr("Faster touchpad scroll")
             checked: Config.options.interactions.scrolling.fasterTouchpadScroll
             onCheckedChanged: {
@@ -752,7 +753,7 @@ ContentPage {
                 }
             }
             ConfigSpinBox {
-                icon: "touchpad"
+                icon: "trackpad_input"
                 text: Translation.tr("Touchpad")
                 value: Config.options.interactions.scrolling.touchpadScrollFactor
                 from: 1

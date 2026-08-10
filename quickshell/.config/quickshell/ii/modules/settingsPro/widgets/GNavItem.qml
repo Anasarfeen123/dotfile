@@ -45,6 +45,13 @@ GButton {
         GText {
             visible: root.expanded
             Layout.fillWidth: true
+            // horizontalPadding is 0 on the button itself (needed so the
+            // 44px icon exactly fills the rail's collapsed width with no
+            // clipping) — but that left the label running flush to the
+            // pill's own rounded right edge with nothing to stop it. Only
+            // the label needs the margin back; the icon side must stay at
+            // 0 for the collapsed state to still fit.
+            Layout.rightMargin: 10
             text: root.buttonText
             elide: Text.ElideRight
             color: root.toggled ? Appearance.colors.colOnLayer1 : Appearance.colors.colOnLayer1

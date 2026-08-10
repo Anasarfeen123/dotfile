@@ -359,7 +359,8 @@ ContentPage {
     }
 
     ContentSection {
-        icon: "system_update"
+        // "system_update" isn't in the installed font; "_alt" is.
+        icon: "system_update_alt"
         title: Translation.tr("Updates")
 
         ConfigSwitch {
@@ -432,7 +433,10 @@ ContentPage {
     }
 
     ContentSection {
-        icon: "conflict"
+        // Was "conflict" — a real Material Symbols name, same as "scroll"
+        // elsewhere, but not present in the installed font build, so it
+        // fell back to literal text instead of a glyph.
+        icon: "dangerous"
         title: Translation.tr("Conflict killer")
 
         ConfigSwitch {

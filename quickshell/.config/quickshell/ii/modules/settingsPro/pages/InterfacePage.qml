@@ -513,7 +513,8 @@ GPage {
             GTooltip { text: Translation.tr("When off, scrolling up goes to the next workspace and down to the previous.\nWhen on, this direction is reversed.") }
         }
         GSwitchRow {
-            buttonIcon: "touchpad"
+            // "touchpad" isn't in the installed font; "trackpad_input" is.
+            buttonIcon: "trackpad_input"
             buttonText: Translation.tr("Faster touchpad scroll")
             checked: Config.options.interactions.scrolling.fasterTouchpadScroll
             onCheckedChanged: Config.options.interactions.scrolling.fasterTouchpadScroll = checked
@@ -530,7 +531,7 @@ GPage {
                 GTooltip { text: Translation.tr("Mouse scroll factor\nHigher = faster, 120 is the default.") }
             }
             GSpinRow {
-                icon: "touchpad"
+                icon: "trackpad_input"
                 text: Translation.tr("Touchpad")
                 value: Config.options.interactions.scrolling.touchpadScrollFactor
                 from: 1; to: 1000; stepSize: 10

@@ -128,6 +128,11 @@ DockButton {
             anchors.fill: parent
             hoverEnabled: true
             acceptedButtons: Qt.NoButton
+            // This overlay sits on top of RippleButton's own base MouseArea
+            // (which does set a pointing-hand cursor) purely to track hover
+            // state and wheel input — but being on top, its own default
+            // ArrowCursor was winning regardless of what's underneath.
+            cursorShape: Qt.PointingHandCursor
             onEntered: {
                 appListRoot.lastHoveredButton = root
                 appListRoot.buttonHovered = true
@@ -299,6 +304,15 @@ DockButton {
 
     contentItem: Loader {
         active: !isSeparator
+        // Was relying on whatever size Control's default contentItem
+        // layout assigned here, which turned out not to be the full
+        // button height (padding/availableHeight quirks) — so the inner
+        // Item's `centerIn: parent` below was centering within a *shorter*
+        // box than the actual button, landing visibly above true center.
+        // Binding straight to root's own real height sidesteps that
+        // entirely.
+        width: root.width
+        height: root.height
 
         // Magnify + lift, moved here from root (see the comment above
         // iconScale) so only the drawn content grows/lifts on hover, never
@@ -324,16 +338,20 @@ DockButton {
 
         sourceComponent: Item {
             anchors.centerIn: parent
-            // Was unsized, so `centerIn: parent` above centered a
-            // zero-height point rather than the actual icon+dots group —
-            // the icon ended up dead center while the running-indicator
-            // dots then extended further down from there, visually
-            // pushing everything up with too much empty space below. This
-            // sizes the wrapper to the icon's real height, plus room for
-            // the dots when any windows are open, so centering actually
-            // centers the whole group.
-            implicitWidth: root.iconSize
-            implicitHeight: root.iconSize + (appToplevel.toplevels.length > 0 ? 2 + root.countDotHeight : 0)
+            // Was `implicitWidth`/`implicitHeight` — those are only a
+            // *hint* the Loader is free to override, and since the Loader
+            // above now has an explicit width/height of its own, Loader's
+            // default behavior stretches an unsized child to fill it
+            // completely. That silently expanded this wrapper to the
+            // *button's* full height regardless of what implicitHeight
+            // said, which made `centerIn: parent` a no-op (the wrapper was
+            // already the same size as its parent) and left the icon —
+            // anchored to this wrapper's own top — sitting at the literal
+            // top of the button instead of centered. Real width/height
+            // can't be overridden that way, so the sizing actually holds
+            // and centerIn works as intended.
+            width: root.iconSize
+            height: root.iconSize + (appToplevel.toplevels.length > 0 ? 2 + root.countDotHeight : 0)
 
             // Material "state layer": a soft rounded tile fading in behind
             // the icon on hover, so icons have some visual weight of their
