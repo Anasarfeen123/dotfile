@@ -8,8 +8,8 @@
 hl.config({
     decoration = {
         blur = {
-            size = 10,
-            vibrancy = 0.38,
+            size = 14,
+            vibrancy = 0.44,
         },
     },
     render = {

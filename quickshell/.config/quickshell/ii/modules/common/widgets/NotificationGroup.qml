@@ -12,6 +12,7 @@ import Quickshell.Services.Notifications
  */
 MouseArea { // Notification group area
     id: root
+    acceptedButtons: Qt.NoButton
     property var notificationGroup
     property var notifications: notificationGroup?.notifications ?? []
     property int notificationCount: notifications.length
@@ -90,7 +91,7 @@ MouseArea { // Notification group area
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
 
         onPressed: {
-            if (mouse.button === Qt.RightButton)
+            if (mouse.button === Qt.RightButton && !root.expanded)
                 root.toggleExpanded();
         }
 
@@ -259,6 +260,23 @@ MouseArea { // Notification group area
                     }
                 }
 
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.RightButton | Qt.MiddleButton
+            hoverEnabled: false
+            z: 100
+
+            onPressed: mouse => {
+                if (mouse.button === Qt.RightButton) {
+                    if (!root.expanded) root.toggleExpanded();
+                    mouse.accepted = true;
+                } else if (mouse.button === Qt.MiddleButton) {
+                    root.destroyWithAnimation();
+                    mouse.accepted = true;
+                }
             }
         }
     }

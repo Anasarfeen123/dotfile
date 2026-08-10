@@ -150,6 +150,31 @@ ContentPage {
                 Config.options.dock.showControlButtons = checked;
             }
         }
+        ConfigRow {
+            uniform: true
+            ConfigSpinBox {
+                icon: "height"
+                text: Translation.tr("Dock size")
+                value: Config.options.dock.height
+                from: 50
+                to: 130
+                stepSize: 2
+                onValueChanged: {
+                    Config.options.dock.height = value;
+                }
+            }
+            ConfigSpinBox {
+                icon: "apps"
+                text: Translation.tr("Icon size")
+                value: Config.options.dock.iconSize
+                from: 24
+                to: 64
+                stepSize: 2
+                onValueChanged: {
+                    Config.options.dock.iconSize = value;
+                }
+            }
+        }
     }
 
     ContentSection {

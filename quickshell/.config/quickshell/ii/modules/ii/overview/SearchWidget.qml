@@ -31,7 +31,7 @@ Item { // Wrapper
     // its own expanded corner radius to this instead of using an unrelated
     // fixed token — the search bar sits right at the panel's top edge, so
     // their top corners are physically the same corner and need to agree.
-    readonly property real cornerRadius: searchWidgetContent.radius
+    readonly property real cornerRadius: Appearance.rounding.verylarge
 
     property string searchingText: LauncherSearch.query
     property bool showResults: searchingText != ""
@@ -119,13 +119,18 @@ Item { // Wrapper
             topMargin: Appearance.sizes.elevationMargin
         }
         clip: true
-        implicitWidth: columnLayout.implicitWidth
+        implicitWidth: Math.max(columnLayout.implicitWidth, 560)
         implicitHeight: columnLayout.implicitHeight
-        radius: searchBar.height / 2 + searchBar.verticalPadding
+        radius: root.cornerRadius
+        topLeftRadius: root.cornerRadius
+        topRightRadius: root.cornerRadius
+        bottomLeftRadius: root.showResults ? Appearance.rounding.large : root.cornerRadius
+        bottomRightRadius: root.showResults ? Appearance.rounding.large : root.cornerRadius
         // Same glass recipe as the sidebars/dock, rather than the M3
         // surface-container token this used before — keeps the whole
         // overview reading as one consistent frosted-glass surface.
-        color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Base, 0.72)
+        color: ColorUtils.applyAlpha(ColorUtils.mix(Appearance.colors.colLayer0Base, Appearance.m3colors.m3shadow, 0.9), 0.72)
+        border.width: 0
 
         Behavior on implicitHeight {
             id: searchHeightBehavior
@@ -141,6 +146,7 @@ Item { // Wrapper
 
         ColumnLayout {
             id: columnLayout
+            width: searchWidgetContent.width
             anchors {
                 top: parent.top
                 horizontalCenter: parent.horizontalCenter
@@ -158,6 +164,10 @@ Item { // Wrapper
                     // widget expands taller than it is wide.
                     height: searchWidgetContent.height
                     radius: searchWidgetContent.radius
+                    topLeftRadius: searchWidgetContent.topLeftRadius
+                    topRightRadius: searchWidgetContent.topRightRadius
+                    bottomLeftRadius: searchWidgetContent.bottomLeftRadius
+                    bottomRightRadius: searchWidgetContent.bottomRightRadius
                 }
             }
 
@@ -165,8 +175,8 @@ Item { // Wrapper
                 id: searchBar
                 property real verticalPadding: 4
                 Layout.fillWidth: true
-                Layout.leftMargin: 10
-                Layout.rightMargin: 4
+                Layout.leftMargin: 12
+                Layout.rightMargin: 6
                 Layout.topMargin: verticalPadding
                 Layout.bottomMargin: verticalPadding
                 Synchronizer on searchingText {
@@ -178,10 +188,10 @@ Item { // Wrapper
                 // Separator
                 visible: root.showResults
                 Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
+                Layout.leftMargin: 16
+                Layout.rightMargin: 16
                 height: 1
-                color: ColorUtils.applyAlpha(Appearance.colors.colOutlineVariant, 0.6)
+                color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.18)
             }
 
             // Was a plain ListView — results popping in/reordering as you
@@ -197,40 +207,29 @@ Item { // Wrapper
                 // made the whole glass panel stretch nearly the height of
                 // the screen. Capped shorter so it stays a compact search
                 // box that scrolls, instead of a giant black slab.
-                implicitHeight: Math.min(420, appResults.contentHeight + topMargin + bottomMargin)
+                implicitHeight: Math.min(390, appResults.contentHeight + topMargin + bottomMargin)
                 clip: true
-                topMargin: 10
-                bottomMargin: 10
-                spacing: 2
+                animateAppearance: false
+                animateMovement: false
+                topMargin: 12
+                bottomMargin: 12
+                spacing: 4
                 KeyNavigation.up: searchBar
-                highlightMoveDuration: 100
-
-                onFocusChanged: {
-                    if (focus)
-                        appResults.currentIndex = 1;
-                }
-
-                Connections {
-                    target: root
-                    function onSearchingTextChanged() {
-                        if (appResults.count > 0)
-                            appResults.currentIndex = 0;
-                    }
-                }
+                highlightMoveDuration: 0
 
                 Timer {
                     id: debounceTimer
                     interval: root.typingDebounceInterval
                     onTriggered: {
-                        resultModel.values = LauncherSearch.results ?? [];
+                        resultModel.values = (LauncherSearch.results ?? []).slice(0, root.typingResultLimit);
+                        if (appResults.count > 0)
+                            appResults.currentIndex = 0;
                     }
                 }
 
                 Connections {
                     target: LauncherSearch
                     function onResultsChanged() {
-                        resultModel.values = LauncherSearch.results.slice(0, root.typingResultLimit);
-                        root.focusFirstItem();
                         debounceTimer.restart();
                     }
                 }

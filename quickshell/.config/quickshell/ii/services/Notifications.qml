@@ -210,6 +210,7 @@ Singleton {
 
     function discardAllNotifications() {
         root.list = []
+        root.unread = 0
         triggerListChange()
         notifFileView.setText(stringifyList(root.list));
         notifServer.trackedNotifications.values.forEach((notif) => {

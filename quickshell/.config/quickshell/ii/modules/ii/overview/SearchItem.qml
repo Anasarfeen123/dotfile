@@ -36,15 +36,15 @@ RippleButton {
     property bool blurImage: entry?.blurImage ?? false
     
     visible: root.entryShown
-    property int horizontalMargin: 10
-    property int buttonHorizontalPadding: 10
+    property int horizontalMargin: 12
+    property int buttonHorizontalPadding: 12
     property int buttonVerticalPadding: 6
     property bool keyboardDown: false
     readonly property bool selected: (root.hovered || root.focus)
 
     implicitHeight: rowLayout.implicitHeight + root.buttonVerticalPadding * 2
     implicitWidth: rowLayout.implicitWidth + root.buttonHorizontalPadding * 2
-    buttonRadius: Appearance.rounding.small
+    buttonRadius: Appearance.rounding.normal
     colBackground: (root.down || root.keyboardDown) ? Appearance.colors.colPrimaryContainerActive : 
         (selected ? Appearance.colors.colPrimaryContainer : 
         ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 1))
@@ -129,7 +129,7 @@ RippleButton {
 
     RowLayout {
         id: rowLayout
-        spacing: iconLoader.sourceComponent === null ? 0 : 10
+        spacing: iconLoader.sourceComponent === null ? 0 : 12
         anchors.fill: parent
         anchors.leftMargin: root.horizontalMargin + root.buttonHorizontalPadding
         anchors.rightMargin: root.horizontalMargin + root.buttonHorizontalPadding
@@ -138,6 +138,7 @@ RippleButton {
         Loader {
             id: iconLoader
             active: true
+            Layout.alignment: Qt.AlignVCenter
             sourceComponent: switch(root.iconType) {
                 case LauncherSearchResult.IconType.Material:
                     return materialSymbolComponent
@@ -157,7 +158,7 @@ RippleButton {
             Rectangle {
                 width: 40
                 height: 40
-                radius: Appearance.rounding.small
+                radius: Appearance.rounding.normal
                 color: ColorUtils.applyAlpha(Appearance.colors.colPrimaryContainer, root.selected ? 0.45 : 0.18)
                 IconImage {
                     anchors.fill: parent
@@ -172,7 +173,7 @@ RippleButton {
             Rectangle {
                 width: 40
                 height: 40
-                radius: Appearance.rounding.small
+                radius: Appearance.rounding.normal
                 color: ColorUtils.applyAlpha(Appearance.colors.colPrimaryContainer, root.selected ? 0.45 : 0.18)
                 MaterialSymbol {
                     anchors.centerIn: parent

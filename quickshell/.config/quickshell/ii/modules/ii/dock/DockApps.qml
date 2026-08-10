@@ -45,7 +45,7 @@ Item {
 
     StyledListView {
         id: listView
-        spacing: 2
+        spacing: 8
         orientation: ListView.Horizontal
         anchors {
             top: parent.top

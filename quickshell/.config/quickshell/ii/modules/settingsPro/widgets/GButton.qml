@@ -12,6 +12,8 @@ Button {
     property bool primary: false // filled/accent variant
     property string buttonText
     property string buttonIcon
+    property string textFontFamily: Appearance.font.family.main
+    property real textPixelSize: Appearance.font.pixelSize.small
     property bool materialIconFill: true
     property real iconSize: Appearance.font.pixelSize.larger
     property real buttonRadius: Appearance.rounding.small
@@ -24,7 +26,10 @@ Button {
         GText {
             visible: text !== ""
             text: root.buttonText
-            font.pixelSize: Appearance.font.pixelSize.small
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            font.family: root.textFontFamily
+            font.pixelSize: root.textPixelSize
             color: root.contentColor
         }
     }
