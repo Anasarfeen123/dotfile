@@ -27,6 +27,12 @@ Item { // Wrapper
     // looking exactly like the list had crashed.
     readonly property int typingResultLimit: 500
 
+    // Exposed so the outer capsule (Overview.qml's revealClip) can match
+    // its own expanded corner radius to this instead of using an unrelated
+    // fixed token — the search bar sits right at the panel's top edge, so
+    // their top corners are physically the same corner and need to agree.
+    readonly property real cornerRadius: searchWidgetContent.radius
+
     property string searchingText: LauncherSearch.query
     property bool showResults: searchingText != ""
     implicitWidth: searchWidgetContent.implicitWidth + Appearance.sizes.elevationMargin * 2

@@ -128,12 +128,19 @@ Scope {
             // dock/sidebars settle on — min(width,height)/2 alone doesn't
             // work here: at full size this panel is much taller than the
             // small pill, so that formula kept giving a huge, ballooning
-            // radius that didn't match the modest rounding on the actual
-            // content (search bar, workspace grid) inside it. Now it's a
-            // true capsule only near the collapsed size, and blends to the
-            // fixed radius by the time it's ~2x that width — settling into
-            // a normal rounded rect that actually matches its contents.
-            readonly property real expandedRadius: Appearance.rounding.windowRounding
+            // radius. Now it's a true capsule only near the collapsed
+            // size, and blends to expandedRadius by the time it's ~2x that
+            // width.
+            //
+            // expandedRadius itself matches SearchWidget's own top corner
+            // radius exactly (searchBar.height/2 + padding, quite rounded)
+            // rather than the unrelated fixed windowRounding token used
+            // everywhere else — the search bar sits flush at the panel's
+            // top edge, so its top corners *are* the capsule's top
+            // corners, and a mismatched radius there was the visible seam
+            // making the whole thing look like nested boxes instead of one
+            // shape, even after the border/shadow cleanup.
+            readonly property real expandedRadius: searchWidget.cornerRadius
             readonly property real pillRadius: Math.min(width, height) / 2
             readonly property real growthProgress: Math.min(1, Math.max(0, (width - collapsedWidth) / (collapsedWidth * 2)))
             readonly property real islandRadius: pillRadius + (expandedRadius - pillRadius) * growthProgress

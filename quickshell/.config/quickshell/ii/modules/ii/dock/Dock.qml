@@ -202,6 +202,12 @@ Scope { // Scope
                             property real padding: 10
 
                             VerticalButtonGroup {
+                                // Off by default — see Config.options.dock.
+                                // showControlButtons. Pin/launcher are
+                                // control chrome, not apps; a bare macOS-
+                                // style dock reads cleaner without them,
+                                // and this is re-enableable in Settings.
+                                visible: Config.options.dock.showControlButtons
                                 Layout.topMargin: Appearance.sizes.hyprlandGapsOut // why does this work
                                 GroupButton {
                                     // Pin button — a filled circle once
@@ -232,14 +238,15 @@ Scope { // Scope
                                     }
                                 }
                             }
-                            DockSeparator {}
+                            DockSeparator { visible: Config.options.dock.showControlButtons }
                             DockApps {
                                 id: dockApps
                                 buttonPadding: dockRow.padding
                             }
-                            DockSeparator {}
+                            DockSeparator { visible: Config.options.dock.showControlButtons }
                             DockButton {
                                 id: launcherButton
+                                visible: Config.options.dock.showControlButtons
                                 Layout.fillHeight: true
                                 onClicked: GlobalStates.overviewOpen = !GlobalStates.overviewOpen
                                 topInset: Appearance.sizes.hyprlandGapsOut + dockRow.padding

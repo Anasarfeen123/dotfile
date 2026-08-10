@@ -406,6 +406,10 @@ Singleton {
                 property real hoverRegionHeight: 2
                 property bool pinnedOnStartup: false
                 property bool hoverToReveal: true // When false, only reveals on empty workspace
+                // The pin (keep dock open) and "show all apps" buttons are
+                // control chrome, not apps — off by default now for a
+                // cleaner, more macOS-like dock that's just your apps.
+                property bool showControlButtons: false
                 property list<string> pinnedApps: [ // IDs of pinned entries
                     "org.kde.dolphin", "kitty",]
                 property list<string> ignoredAppRegexes: []

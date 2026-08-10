@@ -142,6 +142,14 @@ ContentPage {
                 Config.options.dock.monochromeIcons = checked;
             }
         }
+        ConfigSwitch {
+            buttonIcon: "keep"
+            text: Translation.tr("Show pin & \"show all apps\" buttons")
+            checked: Config.options.dock.showControlButtons
+            onCheckedChanged: {
+                Config.options.dock.showControlButtons = checked;
+            }
+        }
     }
 
     ContentSection {

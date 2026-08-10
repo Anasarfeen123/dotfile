@@ -148,6 +148,14 @@ StyledGlassSurface {
         }
 
         SecondaryTabBar { // Tab switcher (Windows | Workspaces)
+            // Was using bare TabButton for its children — every other
+            // SecondaryTabBar in the shell (timetable, pomodoro, todo,
+            // volume mixer, resources) uses SecondaryTabButton instead,
+            // which is what actually carries the pill background, colored
+            // checked-state text and ripple. Plain TabButton falls back to
+            // the app's Basic QQC2 style, so this one tab bar rendered as a
+            // crude flat segmented control instead of matching the rest of
+            // the app.
             id: tabBar
             visible: !collapsed
             Layout.fillWidth: true
@@ -156,13 +164,13 @@ StyledGlassSurface {
             currentIndex: root.selectedTab
             onCurrentIndexChanged: root.setTab(tabBar.currentIndex)
 
-            TabButton {
-                text: Translation.tr("Windows")
-                font.pixelSize: Appearance.font.pixelSize.smaller
+            SecondaryTabButton {
+                buttonText: Translation.tr("Windows")
+                buttonIcon: "list"
             }
-            TabButton {
-                text: Translation.tr("Workspaces")
-                font.pixelSize: Appearance.font.pixelSize.smaller
+            SecondaryTabButton {
+                buttonText: Translation.tr("Workspaces")
+                buttonIcon: "grid_view"
             }
         }
 

@@ -69,25 +69,19 @@ DockButton {
     // BezierSpline motion tokens, which is likely why hovering felt off
     // compared to everything else. elementMoveFast matches the snappy
     // hover feedback used elsewhere (tab bars, resource icons, etc).
-    scale: (isHovered ? 1.30 : 1.0) + neighborBoost
-    Behavior on scale {
-        NumberAnimation {
-            duration: Appearance.animation.elementMoveFast.duration
-            easing.type: Easing.BezierSpline
-            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-        }
-    }
-
-    transform: Translate {
-        y: root.yOffset + root.bounceOffset
-        Behavior on y {
-            NumberAnimation {
-                duration: Appearance.animation.elementMoveFast.duration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-            }
-        }
-    }
+    //
+    // scale/transform used to live directly on root (this whole button,
+    // including its own hit-test area). Qt Quick's scale is a live
+    // coordinate-space transform: children's hoverable/clickable bounds
+    // grow with it too, not just the paint. With 10px spacing and a 30%
+    // scale-up, a hovered icon's *interactive* area was genuinely
+    // ballooning into its neighbors' territory mid-animation — landing the
+    // pointer right in the overlap made hover state flip back and forth
+    // between the two icons, which is what the flickering was. Both now
+    // live on contentItem (the actual rendered visuals) below instead, so
+    // root's own bounds — and therefore everyone's hit-test region — stay
+    // fixed regardless of how big anything is drawn.
+    property real iconScale: (isHovered ? 1.30 : 1.0) + neighborBoost
 
     SequentialAnimation {
         id: launchBounceAnim
@@ -305,6 +299,29 @@ DockButton {
 
     contentItem: Loader {
         active: !isSeparator
+
+        // Magnify + lift, moved here from root (see the comment above
+        // iconScale) so only the drawn content grows/lifts on hover, never
+        // the button's own interactive bounds.
+        scale: root.iconScale
+        Behavior on scale {
+            NumberAnimation {
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            }
+        }
+        transform: Translate {
+            y: root.yOffset + root.bounceOffset
+            Behavior on y {
+                NumberAnimation {
+                    duration: Appearance.animation.elementMoveFast.duration
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                }
+            }
+        }
+
         sourceComponent: Item {
             anchors.centerIn: parent
             // Was unsized, so `centerIn: parent` above centered a

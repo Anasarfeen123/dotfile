@@ -100,6 +100,12 @@ GPage {
             checked: Config.options.dock.monochromeIcons
             onCheckedChanged: Config.options.dock.monochromeIcons = checked
         }
+        GSwitchRow {
+            buttonIcon: "keep"
+            buttonText: Translation.tr("Show pin & \"show all apps\" buttons")
+            checked: Config.options.dock.showControlButtons
+            onCheckedChanged: Config.options.dock.showControlButtons = checked
+        }
     }
 
     GSection {
