@@ -187,6 +187,16 @@ Scope {
                     id: overviewLoader
                     anchors.horizontalCenter: parent.horizontalCenter
                     active: (panelWindow.wantsOpen || panelWindow.closing) && (Config?.options.overview.enable ?? true)
+                    // Was only hiding the loaded OverviewWidget's own
+                    // `visible` while searching/browsing clipboard — but
+                    // Column only skips a direct child from layout when
+                    // *that child's own* visible is false, and the Loader
+                    // itself (the actual Column child here) stayed visible
+                    // regardless. So it kept reserving the workspace grid's
+                    // full height as blank space below the search results,
+                    // which is why the glass panel stayed tall/"too long"
+                    // no matter how short the results list itself was.
+                    visible: panelWindow.searchingText == ""
                     sourceComponent: OverviewWidget {
                         screen: panelWindow.screen
                         visible: (panelWindow.searchingText == "")

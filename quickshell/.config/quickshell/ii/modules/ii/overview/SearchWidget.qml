@@ -17,7 +17,15 @@ Item { // Wrapper
 
     readonly property string xdgConfigHome: Directories.config
     readonly property int typingDebounceInterval: 200
-    readonly property int typingResultLimit: 15 // Should be enough to cover the whole view
+    // This slices resultModel.values, i.e. what's *actually scrollable* --
+    // not just what's visible at once (ListView virtualizes rendering, so a
+    // large model here is cheap). Was 15, which is fine for app search
+    // (narrows fast as you type) but silently broke clipboard browsing:
+    // the footer's "395 results" reads LauncherSearch.results.length
+    // directly (unsliced), while the real scrollable list quietly stopped
+    // at item 15 — so scrolling past that showed nothing but blank panel,
+    // looking exactly like the list had crashed.
+    readonly property int typingResultLimit: 500
 
     property string searchingText: LauncherSearch.query
     property bool showResults: searchingText != ""
@@ -179,7 +187,11 @@ Item { // Wrapper
                 id: appResults
                 visible: root.showResults
                 Layout.fillWidth: true
-                implicitHeight: Math.min(600, appResults.contentHeight + topMargin + bottomMargin)
+                // Was capped at 600 — for clipboard/big result sets that
+                // made the whole glass panel stretch nearly the height of
+                // the screen. Capped shorter so it stays a compact search
+                // box that scrolls, instead of a giant black slab.
+                implicitHeight: Math.min(420, appResults.contentHeight + topMargin + bottomMargin)
                 clip: true
                 topMargin: 10
                 bottomMargin: 10
@@ -245,50 +257,68 @@ Item { // Wrapper
                 }
 
                 // Footer: keyboard hint + result count
-                RowLayout {
+                //
+                // This used to be a plain child of the ListView using
+                // Layout.fillWidth/leftMargin/etc — but ListView isn't a
+                // Layout, so none of those attached properties did anything.
+                // The row just sat at its implicit (0,0) position instead of
+                // trailing the list, which is why there was never a real
+                // bottom margin below the results: this "footer" wasn't
+                // actually part of the scrollable footer area at all. Using
+                // the real ListView.footer property fixes that properly.
+                footer: Item {
+                    width: appResults.width
+                    implicitHeight: visible ? footerRow.implicitHeight + 16 : 0
                     visible: root.showResults && resultModel.values.length > 0
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 14
-                    Layout.rightMargin: 12
-                    Layout.topMargin: 6
-                    Layout.bottomMargin: 10
-                    spacing: 8
 
-                    StyledText {
-                        Layout.fillWidth: true
-                        Layout.maximumWidth: 120
-                        Layout.alignment: Qt.AlignVCenter
-                        text: Translation.tr("%1 results").arg(LauncherSearch.results.length)
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        color: Appearance.colors.colSubtext
-                        elide: Text.ElideRight
-                    }
+                    RowLayout {
+                        id: footerRow
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            top: parent.top
+                            leftMargin: 14
+                            rightMargin: 12
+                            topMargin: 6
+                        }
+                        spacing: 8
 
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        clip: true
-                        RowLayout {
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: 10
-                            Repeater {
-                                model: [
-                                    {key: "↑↓", label: Translation.tr("Navigate")},
-                                    {key: "Tab", label: Translation.tr("Tab")},
-                                    {key: "↵", label: Translation.tr("Open")},
-                                ]
-                                delegate: RowLayout {
-                                    required property var modelData
-                                    spacing: 4
-                                    KeyboardKey {
-                                        key: modelData.key
-                                        pixelSize: Appearance.font.pixelSize.smallest
-                                    }
-                                    StyledText {
-                                        text: modelData.label
-                                        font.pixelSize: Appearance.font.pixelSize.smallest
-                                        color: Appearance.colors.colSubtext
+                        StyledText {
+                            Layout.fillWidth: true
+                            Layout.maximumWidth: 120
+                            Layout.alignment: Qt.AlignVCenter
+                            text: Translation.tr("%1 results").arg(LauncherSearch.results.length)
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            color: Appearance.colors.colSubtext
+                            elide: Text.ElideRight
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            clip: true
+                            RowLayout {
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 10
+                                Repeater {
+                                    model: [
+                                        {key: "↑↓", label: Translation.tr("Navigate")},
+                                        {key: "Tab", label: Translation.tr("Tab")},
+                                        {key: "↵", label: Translation.tr("Open")},
+                                    ]
+                                    delegate: RowLayout {
+                                        required property var modelData
+                                        spacing: 4
+                                        KeyboardKey {
+                                            key: modelData.key
+                                            pixelSize: Appearance.font.pixelSize.smallest
+                                        }
+                                        StyledText {
+                                            text: modelData.label
+                                            font.pixelSize: Appearance.font.pixelSize.smallest
+                                            color: Appearance.colors.colSubtext
+                                        }
                                     }
                                 }
                             }
