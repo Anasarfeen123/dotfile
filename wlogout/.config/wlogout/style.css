@@ -57,41 +57,41 @@ button:hover {
 }
 
 #lock {
-    background-image: url("/home/anasa/.config/wlogout/icons/lock.svg");
+    background-image: url("icons/lock.svg");
 }
 #lock:hover {
-    background-image: url("/home/anasa/.config/wlogout/icons/lock.svg"), linear-gradient(135deg, rgba(66, 133, 244, 0.45), rgba(25, 118, 210, 0.65));
+    background-image: url("icons/lock.svg"), linear-gradient(135deg, rgba(66, 133, 244, 0.45), rgba(25, 118, 210, 0.65));
     border-color: rgba(100, 180, 255, 0.75);
 }
 
 #suspend {
-    background-image: url("/home/anasa/.config/wlogout/icons/suspend.svg");
+    background-image: url("icons/suspend.svg");
 }
 #suspend:hover {
-    background-image: url("/home/anasa/.config/wlogout/icons/suspend.svg"), linear-gradient(135deg, rgba(171, 71, 188, 0.45), rgba(123, 31, 162, 0.65));
+    background-image: url("icons/suspend.svg"), linear-gradient(135deg, rgba(171, 71, 188, 0.45), rgba(123, 31, 162, 0.65));
     border-color: rgba(220, 130, 255, 0.75);
 }
 
 #logout {
-    background-image: url("/home/anasa/.config/wlogout/icons/logout.svg");
+    background-image: url("icons/logout.svg");
 }
 #logout:hover {
-    background-image: url("/home/anasa/.config/wlogout/icons/logout.svg"), linear-gradient(135deg, rgba(38, 166, 154, 0.45), rgba(0, 121, 107, 0.65));
+    background-image: url("icons/logout.svg"), linear-gradient(135deg, rgba(38, 166, 154, 0.45), rgba(0, 121, 107, 0.65));
     border-color: rgba(80, 230, 210, 0.75);
 }
 
 #reboot {
-    background-image: url("/home/anasa/.config/wlogout/icons/reboot.svg");
+    background-image: url("icons/reboot.svg");
 }
 #reboot:hover {
-    background-image: url("/home/anasa/.config/wlogout/icons/reboot.svg"), linear-gradient(135deg, rgba(255, 167, 38, 0.45), rgba(245, 124, 0, 0.65));
+    background-image: url("icons/reboot.svg"), linear-gradient(135deg, rgba(255, 167, 38, 0.45), rgba(245, 124, 0, 0.65));
     border-color: rgba(255, 200, 100, 0.75);
 }
 
 #shutdown {
-    background-image: url("/home/anasa/.config/wlogout/icons/shutdown.svg");
+    background-image: url("icons/shutdown.svg");
 }
 #shutdown:hover {
-    background-image: url("/home/anasa/.config/wlogout/icons/shutdown.svg"), linear-gradient(135deg, rgba(239, 83, 80, 0.50), rgba(211, 47, 47, 0.70));
+    background-image: url("icons/shutdown.svg"), linear-gradient(135deg, rgba(239, 83, 80, 0.50), rgba(211, 47, 47, 0.70));
     border-color: rgba(255, 120, 120, 0.85);
 }

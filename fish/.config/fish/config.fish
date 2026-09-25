@@ -30,7 +30,7 @@ if status is-interactive
     alias .. 'cd ..'
     alias ... 'cd ../..'
     alias .... 'cd ../../..'
-    alias -- - 'cd -'
+    abbr -a -- - 'cd -'
 
     # Kitty SSH
     if test "$TERM" = "xterm-kitty"
@@ -83,7 +83,7 @@ if status is-interactive
     alias weather 'curl -s wttr.in'
     alias python python3
     alias pip pip3
-    alias top 'btm' 2>/dev/null; or alias top 'htop'
+    if command -q btm; alias top btm; else; alias top htop; end
 
     # Reload
     alias reload 'exec fish'
@@ -95,7 +95,7 @@ end
 
 
 # Added by Antigravity CLI installer
-set -gx PATH "/home/anasa/.local/bin" $PATH
+fish_add_path -g $HOME/.local/bin
 
 # opencode
-fish_add_path /home/anasa/.opencode/bin
+fish_add_path -g $HOME/.opencode/bin

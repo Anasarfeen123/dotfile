@@ -129,7 +129,7 @@ Item {
 
     Process {
         id: cavaProc
-        command: ["cava", "-p", "/home/anasa/.config/cava/config_qs"]
+        command: ["sh", "-c", "exec cava -p \"$HOME/.config/cava/config_qs\""]
         running: true
         stdout: SplitParser {
             splitMarker: "\n"

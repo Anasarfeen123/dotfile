@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import math
+import os
 import re
 import datetime
 from PIL import Image, ImageDraw, ImageFont
 
-COLORS_CONF_PATH = "/home/anasa/.config/hypr/hyprlock/colors.conf"
+COLORS_CONF_PATH = os.path.expanduser("~/.config/hypr/hyprlock/colors.conf")
 
 # Fallback palette, used if colors.conf is missing or unparsable
 FALLBACK_RGB = {
